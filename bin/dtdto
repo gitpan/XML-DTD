@@ -1,0 +1,134 @@
+#!perl
+
+# This script parses a DTD and writes it out in a simple XML format
+# Brendt Wohlberg <wohl@cpan.org>
+# Most recent modification: 27 May 2006
+
+use strict;
+use Getopt::Long;
+use File::Temp;
+
+use XML::DTD;
+
+my $share = "share";
+my $xsldtd = "$share/dtdto/dtd.xsl";
+my $xslhtml = "$share/dtdto/html.xsl";
+my $xsldbk = "$share/dtdto/docbook.xsl";
+
+my ($usagetext, $help, $format, $dtdflag, $htmlflag, $docbookflag,
+    $topelement, $topid, $title, $anchorprefix);
+$usagetext = <<EOF;
+usage: dtdto [ --help ] [ --dtd | [ ( --html |
+             ( --docbook [ --top-element element-name ]
+             [ --top-id id-string ] ) ) [ --title title-string ]
+             [ --anchor-prefix prefix-string ] ] ]
+             [ input-file [ output-file ] ]
+
+       --dtd           Use xsltproc to convert XML representation back to a DTD
+
+       --html          Use xsltproc to convert to HTML documentation
+
+       --docbook       Use xsltproc to convert to Docbook documentation
+
+       --top-element   Set the Docbook top level element
+
+       --top-id        Set the id attribute of the Docbook top level element
+
+       --title         Set the output document title
+
+       --anchor-prefix Define a prefix for internal link anchors
+
+       --help          Display usage information
+
+       If a --dtd, --html, or --docbook flag is not provided, dtdto emits
+       the intermediate XML representation used to construct these output.
+       Note that the Docbook output is intended for inclusion within a
+       Docbook document, and is not itself a valid Docbook document.
+
+EOF
+
+# Parse command line options
+GetOptions("help!" => \$help,
+	   "dtd!" => \$dtdflag,
+	   "html!" => \$htmlflag,
+	   "docbook!" => \$docbookflag,
+           "top-element=s" => \$topelement,
+	   "top-id=s" => \$topid,
+	   "title=s" => \$title,
+	   "anchor-prefix=s" => \$anchorprefix) or
+  die  $usagetext;
+
+if ($help) {
+  print $usagetext;
+  exit(0);
+}
+
+# Open input and output files if necessary
+my ($dtdfile, $xmlfile, $dtdfh, $xmlfh);
+$dtdfile = $ARGV[0];
+if (defined $dtdfile) {
+  open(DTDFH, "<$dtdfile") or die "Couldn't open file $dtdfile\n";
+  $dtdfh = *DTDFH;
+} else {
+  $dtdfh = *STDIN;
+}
+$xmlfile = $ARGV[1];
+if (defined $xmlfile) {
+  open(XMLFH, ">$xmlfile") or die "Couldn't open file $xmlfile\n";
+  $xmlfh = *XMLFH;
+} else {
+  $xmlfh = *STDOUT;
+}
+
+
+my $dtd = new XML::DTD;
+$dtd->parse($dtdfh);
+
+# Set up temporary files if output postprocessing requested
+my ($cnvfh, $tmpfh1, $tmpfn1, $tmpfh2, $tmpfn2, $cmd, $line);
+if ($dtdflag or $htmlflag or $docbookflag) {
+  ($tmpfh1, $tmpfn1) = File::Temp::tempfile();
+  ($tmpfh2, $tmpfn2) = File::Temp::tempfile();
+  $cnvfh = $tmpfh1;
+} else {
+  $cnvfh = $xmlfh;
+}
+# Perform conversion to XML
+
+$dtd->fwritexml($cnvfh);
+
+# Perform output postprocessing if requested
+if ($dtdflag or $htmlflag or $docbookflag) {
+  my $params;
+  $params = " --stringparam document-title \'$title\' " if ($title);
+  $params .= "--stringparam anchor-prefix \'$anchorprefix\' "
+         if ($anchorprefix);
+  if ($dtdflag) {
+    $cmd = "xsltproc $xsldtd $tmpfn1 > $tmpfn2";
+    !system($cmd) or die "Error running xsltproc\n";
+  } elsif ($htmlflag) {
+    $cmd = "xsltproc $params $xslhtml $tmpfn1 > $tmpfn2";
+    !system($cmd) or die "Error running xsltproc\n";
+  } elsif ($docbookflag) {
+    $params .= "--stringparam enclosing-element \'$topelement\' "
+         if ($topelement);
+    $params .= "--stringparam enclosing-element-id \'$topid\' "
+         if ($topid);
+    $cmd = "xsltproc $params $xsldbk $tmpfn1 > $tmpfn2";
+    !system($cmd) or die "Error running xsltproc\n";
+  }
+  while ($line = <$tmpfh2>) {
+    print $xmlfh $line;
+  }
+  close($tmpfh1);
+  close($tmpfh2);
+  unlink($tmpfn1);
+  unlink($tmpfn2);
+}
+
+
+# Close files if appropriate
+close($dtdfh) if defined ($dtdfile);
+close($xmlfh) if defined ($xmlfile);
+
+exit(0);
