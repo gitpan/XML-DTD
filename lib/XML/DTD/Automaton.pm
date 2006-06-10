@@ -9,7 +9,7 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Constructor
@@ -250,6 +250,26 @@ sub isdeterministic {
 }
 
 
+# Determine whether a symbol sequence is accepted by the automaton (if
+# it is a DFA)
+sub accept {
+  my $self = shift;
+  my $seqn = shift;
+
+  return undef if (!$self->isdeterministic);
+  my $sidx = 0;
+  my ($symb, $dest);
+  while (scalar @$seqn > 0) {
+    $symb = shift @$seqn;
+    $dest = $self->state($sidx)->deststates($symb);
+    return 0 if (!defined $dest or scalar @$dest == 0);
+    $sidx = $self->index($dest->[0]);
+  }
+
+  return ($self->final($sidx))?1:0;
+}
+
+
 # Build a string representation of the automaton
 sub string {
   my $self = shift;
@@ -282,6 +302,27 @@ sub string {
   }
 
   return $str;
+}
+
+
+# Write an XML representation of the automaton
+sub writexml {
+  my $self = shift;
+  my $xmlw = shift;
+
+  $xmlw->open('fsa');
+  my ($n, $tlst, $t);
+  for ($n = 0; $n < $self->{'count'}; $n++) {
+    $xmlw->open('state', {'index' => $n, 'final' => $self->final($n),
+			  'label' => $self->state($n)->label});
+    $tlst = $self->state($n)->transitions;
+    foreach $t (@$tlst) {
+      $xmlw->empty('transition', {'symbol' => $t->[1],
+				  'destination' => $self->index($t->[0])});
+    }
+    $xmlw->close;
+  }
+  $xmlw->close;
 }
 
 
@@ -394,11 +435,27 @@ Remove unreachable states
 
 Determine with the automaton is deterministic
 
+=item B<accept>
+
+ if ($fsa->accept(['a', 'a', 'b', 'c', 'a'])) {
+ ...
+ }
+
+If the automaton is deterministic, determine whether the symbol
+sequence is accepted
+
 =item B<string>
 
  print $fsa->string;
 
 Construct a string representation of the automaton
+
+=item B<writexml>
+
+  $xo = new XML::Output({'fh' => *STDOUT});
+  $fsa->writexml($xo);
+
+Write an XML representation of the automaton
 
 =back
 

@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'		=> 'XML::DTD',
-    'VERSION'           => '0.01',
+    'VERSION'           => '0.02',
 #   'VERSION_FROM'	=> 'lib/XML/DTD.pm',
     'ABSTRACT_FROM'     => 'lib/XML/DTD.pm',
     'AUTHOR'            => 'Brendt Wohlberg <wohl@cpan.org>',
@@ -42,7 +42,7 @@ sub MY::install
     my $inherited = shift->SUPER::install(@_);
     my $insert0 = <<EOF;
 \$(NOECHO) \$(MV) \$(INST_SCRIPT)/dtdto /tmp/dtdto.tmp; \\
-\t\tsed -e 's+my \$\$share =[^;]*+my \$\$share = \\"\${INSTALLSHAREDIR}\\"+' /tmp/dtdto.tmp > \$(INST_SCRIPT)/dtdto; \\
+\t\tsed -e 's+^use FindBin;.*++' -e 's+^my \$\$share =[^;]*+my \$\$share = \\"\${INSTALLSHAREDIR}\\"+' /tmp/dtdto.tmp > \$(INST_SCRIPT)/dtdto; \\
 \t\t\$(CHMOD) \$(PERM_RWX) \$(INST_SCRIPT)/dtdto
 EOF
     $inherited =~ s/\$\(NOECHO\) \$\(MOD_INSTALL\) \\/$insert0\t\$\(NOECHO\) \$\(MOD_INSTALL\) \\/g;

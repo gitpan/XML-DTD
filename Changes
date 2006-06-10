@@ -1,6 +1,10 @@
 Revision history for Perl extension XML::DTD.
 
-0.01  Fri Feb 27 16:52:40 2004
+0.01  2004-02-27
 	- original version; created by h2xs 1.22 with options
 		-X -n XML::DTD
 
+0.02  2006-06-10
+	- Significant changes to dtdto script, including addition of a
+          validating XSLT generating capability, and a man page in POD
+          format.
