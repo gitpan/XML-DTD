@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'		=> 'XML::DTD',
-    'VERSION'           => '0.02',
+    'VERSION'           => '0.03',
 #   'VERSION_FROM'	=> 'lib/XML/DTD.pm',
     'ABSTRACT_FROM'     => 'lib/XML/DTD.pm',
     'AUTHOR'            => 'Brendt Wohlberg <wohl@cpan.org>',
@@ -31,7 +31,8 @@ DESTINSTALLSHAREDIR = \$(DESTDIR)\$(INSTALLSHAREDIR)
 sub MY::installbin
 {
     my $inherited = shift->SUPER::installbin(@_);
-    return "$inherited\t\$(NOECHO) \$(MKPATH) \$(INST_SHAREDIR)
+    $inherited =~ s/\s+$//s;
+    return "$inherited\n\t\$(NOECHO) \$(MKPATH) \$(INST_SHAREDIR)
 \t\$(NOECHO) \$(MKPATH) \$(INST_SHAREDIR)/dtdto
 \t\$(NOECHO) \$(CP) share/dtdto/*.xsl \$(INST_SHAREDIR)/dtdto
 ";
@@ -45,9 +46,9 @@ sub MY::install
 \t\tsed -e 's+^use FindBin;.*++' -e 's+^my \$\$share =[^;]*+my \$\$share = \\"\${INSTALLSHAREDIR}\\"+' /tmp/dtdto.tmp > \$(INST_SCRIPT)/dtdto; \\
 \t\t\$(CHMOD) \$(PERM_RWX) \$(INST_SCRIPT)/dtdto
 EOF
-    $inherited =~ s/\$\(NOECHO\) \$\(MOD_INSTALL\) \\/$insert0\t\$\(NOECHO\) \$\(MOD_INSTALL\) \\/g;
+    chomp $insert0;
+    $inherited =~ s/(pure_[a-z]+_install\s+::.*)/$1\n\t$insert0/g;
     my $insert1 = "\$(INST_SHAREDIR) \$(DESTINSTALLSHAREDIR)";
     $inherited =~ s/(\$\(INST_MAN3DIR\)[^\)]+\))/$1 \\\n\t\t$insert1/g;
     return $inherited;
 }
-
