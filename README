@@ -1,4 +1,4 @@
-XML/DTD version 0.02
+XML/DTD version 0.04
 ====================
 
 This package consists of the XML::DTD Perl module as well as
@@ -30,7 +30,7 @@ This module requires these other modules and libraries:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2004-2006 Brendt Wohlberg  <wohl@cpan.org>
+Copyright (C) 2004-2007 Brendt Wohlberg  <wohl@cpan.org>
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this

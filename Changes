@@ -13,3 +13,7 @@ Revision history for Perl extension XML::DTD.
 	- Changed rule modifications in Makefile.PL to be less
 	  sensitive to specific MakeMaker version (with the result
 	  that dtdto script was broken for some MakeMaker versions).
+
+0.04  2007-03-22
+	- Fixed minor documentation errors.
+	- Applied patch from Peter Lamb for ContentModel bugs.

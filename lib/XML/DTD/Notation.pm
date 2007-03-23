@@ -9,7 +9,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Constructor
@@ -46,7 +46,7 @@ XML::DTD::Notation - Perl module representing a notation declaration in a DTD
 
   use XML::DTD::Notation;
 
-  my $not = XML::DTD::Notation->new('!NOTATION e PUBLIC "+//F//G//EN">');
+  my $not = XML::DTD::Notation->new('<!NOTATION e PUBLIC "+//F//G//EN">');
 
 =head1 DESCRIPTION
 

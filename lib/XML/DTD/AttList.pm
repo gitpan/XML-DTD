@@ -10,7 +10,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Constructor
@@ -135,7 +135,7 @@ an XML DTD.
 
   use XML::DTD::AttList;
   my $entman = XML::DTD::EntityManager->new;
-  my $att = XML::DTD::AttList::new($entman, '<!ATTLIST a b CDATA #IMPLIED');
+  my $att = XML::DTD::AttList::new($entman, '<!ATTLIST a b CDATA #IMPLIED>');
 
 =head1 DESCRIPTION
 
@@ -147,7 +147,7 @@ an XML DTD.
 =item B<new>
 
   $entman = XML::DTD::EntityManager->new;
-  $attlist = new XML::DTD::AttList($entman, '<!ATTLIST a b CDATA #IMPLIED');
+  $attlist = new XML::DTD::AttList($entman, '<!ATTLIST a b CDATA #IMPLIED>');
 
   Constructs a new XML::DTD::AttList object.
 

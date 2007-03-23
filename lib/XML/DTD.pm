@@ -19,7 +19,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Parser);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # Constructor
 sub new {
@@ -164,7 +164,7 @@ XML::DTD - Perl module for parsing XML DTDs
 
   my $dtd = new XML::DTD;
   open(FH,'<file.dtd');
-  my $dtd->fread(*FH);
+  $dtd->fread(*FH);
   close(FH);
   $dtd->fwrite(*STDOUT);
 

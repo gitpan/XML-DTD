@@ -9,7 +9,7 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Constructor
@@ -128,19 +128,12 @@ sub childnames {
 sub string {
   my $self = shift;
 
-  my $str = '';
-  if ($self->isatomic) {
-    $str = $self->element;
+  my $type = $self->type;
+  if ($self->isatomic and ($type eq 'mixed' or $type eq 'element')) {
+    return "(" . $self->_string . ")";
   } else {
-    my $strlst = [];
-    my $child;
-    foreach $child ( @{$self->{'chldlst'}} ) {
-      push @$strlst, $child->string;
-    }
-    $str .= '(' . join($self->combineop,@$strlst) . ')';
+    return $self->_string;
   }
-  $str .= $self->occurop if (defined $self->occurop);
-  return $str;
 }
 
 
@@ -213,7 +206,8 @@ sub type {
     }
   } else {
     my $oop = (defined $self->occurop)?$self->occurop:'';
-    if ($self->combineop eq '|' and ($oop eq '' or $oop eq '*')) {
+    my $cop = (defined $self->combineop)?$self->combineop:'';
+    if ($cop eq '|' and ($oop eq '' or $oop eq '*')) {
       my $chld = $self->children;
       my $c;
       foreach $c (@$chld) {
@@ -259,7 +253,7 @@ sub dfa {
   # Remove unreachable states
   $fsa->rmunreach;
   # Ensure FSA is a DFA
-  warn "FSA is not deterministic\n" if (!$fsa->isdeterministic);
+  carp "FSA is not deterministic\n" if (!$fsa->isdeterministic);
   return $fsa;
 }
 
@@ -311,15 +305,15 @@ sub _parse {
     } else { # Parenthesis first
       my ($mat, $pst) = _parenmatch($cmstr);
       # Check whether parenthesis post-match consists of an optional
-      # occurence operator followed by a combine operator
-      if ($pst =~ /^(\?|\+|\*)?(\,|\|)/) {
+      # occurence operator optionally followed by a combine operator
+      if ($pst =~ /^(\?|\+|\*)?(\,|\|)?/) {
 	$expr = $mat.(defined($1)?$1:'');
 	$self->{'combnop'} = $2;
 	#print "CMBNOP: $2   $cmstr\n";
 	$cmstr = $';
 	push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
       } else {
-	warn "invalid content model: $cmstr\n";
+	carp "invalid content model: $cmstr\n";
 	return;
       }
     }
@@ -344,13 +338,13 @@ sub _parse {
 	  $cmstr = $';
 	  push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
 	} else {
-	  warn "invalid content model: $cmstr\n";
+	  carp "invalid content model: $cmstr\n";
 	  return;
 	}
       }
     }
   } else {
-    warn "invalid content model: $cmstr\n";
+    carp "invalid content model: $cmstr\n";
     return;
   }
 }
@@ -362,53 +356,64 @@ sub _parse {
 sub _parenmatch {
   my $str = shift;
 
-  if ($str =~ /^([^\(\)]*)$/) { # String contains no parentheses
+  my $level = 0;
+  my $pos = 0;
+  my $len = length $str;
+  my $posl = index $str, '('; $posl = $len if ($posl < 0);
+  my $posr = index $str, ')'; $posr = $len if ($posr < 0);
+  if ($posl >= $len && $posr >= $len) {
+    # String contains no parentheses
     return ('',$str);
-  } elsif ($str =~ /^([^\(\)]*\()/) { # String contains an opening parenthesis
-    # Set pre-match string to substring up to opening parenthesis
-    my $pre = $1;
-    # Call recursive part of function on substring after opening parenthesis
-    my ($m, $p) = _parenrecurse($');
-    if (defined $m) {
-      return ($pre.$m, $p);
-    } else {
-      return undef;
+  }
+  do {
+    if ($posl < $posr) {
+      # A ( is next
+      $level++;
+      $pos = $posl+1;
+      $posl = index $str, '(', $pos;
+      $posl = $len if ($posl < 0);
+    } else { # $posl >= $posr
+      # a ) is next
+      $level--;
+      if($level < 0) {
+	carp "Parenthesis matching error in $str\n";
+	return undef;
+      }
+      $pos = $posr+1;
+      $posr = index $str, ')', $pos;
+      $posr = $len if ($posr < 0);
     }
-  } else {
-    warn "Parenthesis matching error in $str\n";
+    # Drop out when the level returns to 0 or the string is exhausted
+  } while ($level > 0 && $pos < $len);
+  if ($level > 0) {
+    carp "Parenthesis matching error in $str\n";
     return undef;
   }
+  my $pre = substr $str, 0, $pos;
+  my $pst = substr $str, $pos;
+  return ($pre, $pst);
 }
 
 
-# Recursive part of function for parenthesis matching
-sub _parenrecurse {
-  my $str = shift;
+# Recursive part of function to build a string representation of the
+# content model
+sub _string {
+  my $self = shift;
 
-  # Initialise match string
-  my $mat = '';
-  # Initialise post-match string
-  my $pst = $str;
-  if ($str =~ /^([^\(\)]*\()/) { # String contains an opening parenthesis
-    # Set pre-match string to substring up to opening parenthesis
-    my $pre = $1;
-    # Do recursive call on substring after opening parenthesis
-    my ($m, $p) = _parenrecurse($');
-    # Append pre-match string and new matching component to match string
-    $mat .= $pre.$m;
-    # Set post-match string to new post-match component
-    $pst = $p;
-  }
-  if ($pst =~ /^([^\(\)]*\))/) { # Post-match contains a closing parenthesis
-    # Append substring up to closing parenthesis to match string
-    $mat .= $1;
-    # Set post-match to subtrstring after closing parenthesis
-    $pst = $';
-    return ($mat, $pst);
+  my $str = '';
+  if ($self->isatomic) {
+    $str = $self->element;
   } else {
-    warn "Parenthesis matching error in $str\n";
-    return undef;
+    my $strlst = [];
+    my $child;
+    foreach $child ( @{$self->{'chldlst'}} ) {
+      push @$strlst, $child->_string;
+    }
+    my $cop = (defined $self->combineop)?$self->combineop:'';
+    $str .= '(' . join($cop,@$strlst) . ')';
   }
+  $str .= $self->occurop if (defined $self->occurop);
+  return $str;
 }
 
 
@@ -617,9 +622,14 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006 by Brendt Wohlberg
+Copyright (C) 2006-2007 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> fixed a bug in the _parse
+function and provided an improved implementation of _parenmatch.
 
 =cut

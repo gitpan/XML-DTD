@@ -9,7 +9,7 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 # Constructor
@@ -158,7 +158,7 @@ sub epselim {
 	$tlst = $e->transitions;
 	# Warn if epsilon transition cannot be eliminated
 	if (scalar @$tlst == 0 and !$self->final($self->{'state'}->{$e})) {
-	  warn "Cannot eliminate epsilon transition from $n to " .
+	  carp "Cannot eliminate epsilon transition from $n to " .
 	    $self->{'state'}->{$e} . "\n";
 	}
 	# Mark the current state as final if the epsilon transition

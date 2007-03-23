@@ -29,4 +29,5 @@ share/dtdto/html.xsl
 share/dtdto/valid.xsl
 bin/dtdto
 t/01basic.t
+t/10cm.t
 t/20dfa.t
