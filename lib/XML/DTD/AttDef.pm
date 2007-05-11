@@ -103,6 +103,9 @@ sub _parse {
   my $ws1 = shift;
   my $ws2 = shift;
 
+  $name = $self->_entitymanager->peexpend($name)
+    if ($name =~ /^%([\w\.:\-_]+);$/);
+
   $self->{'NAME'} = $name;
   $self->{'ATTTYPE'} = $type;
   $self->{'DEFAULTDECL'} = $dflt;
@@ -198,5 +201,9 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> improved entity substitution.
 
 =cut

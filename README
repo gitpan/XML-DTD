@@ -1,4 +1,4 @@
-XML/DTD version 0.04
+XML/DTD version 0.05
 ====================
 
 This package consists of the XML::DTD Perl module as well as
@@ -35,3 +35,9 @@ Copyright (C) 2004-2007 Brendt Wohlberg  <wohl@cpan.org>
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this
 distribution.
+
+ACKNOWLEDGMENTS
+
+Peter Lamb <Peter.Lamb@csiro.au> made a number of significant
+improvements, including bug fixes, more robust parsing, fetching of
+external entities, and improved entity substitution.

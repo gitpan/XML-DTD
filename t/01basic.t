@@ -15,7 +15,7 @@ ok($dtd->sread($cmnt));
 is($dtd->swrite(), $cmnt);
 
 $dtd = new XML::DTD;
-my $elmt = "<ELEMENT a (#PCDATA)>";
+my $elmt = "<!ELEMENT a (#PCDATA)>";
 ok($dtd->sread($elmt));
 is($dtd->swrite(), $elmt);
 

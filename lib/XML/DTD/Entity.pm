@@ -1,6 +1,8 @@
 package XML::DTD::Entity;
 
 use XML::DTD::Component;
+use URI;
+use LWP::Simple;
 
 use 5.008;
 use strict;
@@ -16,6 +18,8 @@ our $VERSION = '0.01';
 sub new {
   my $arg = shift;
   my $ent = shift;
+  my $val = shift; # Parser called as validating
+  my $uri = shift; # The URI the entity was declared in, if known
 
   my $cls = ref($arg) || $arg;
   my $obj = ref($arg) && $arg;
@@ -28,6 +32,9 @@ sub new {
   } else {
     # Called as the main constructor
     $self = { };
+    $self->{'VALIDATING'} = $val;
+    $self->{'URI'} = $uri;
+
     bless $self, $cls;
     $self->define('entity', $ent, '<!ENTITY', '>');
     $self->_parse($ent);
@@ -65,6 +72,14 @@ sub value {
   my $self = shift;
 
   return $self->{'ENTITYDEF'};
+}
+
+
+# Return the URI containing the entity
+sub uri {
+  my $self = shift;
+
+  return $self->{'URI'};
 }
 
 
@@ -133,9 +148,11 @@ sub _parse {
 	$self->{'WSSYS'} = _lftoce($2);
 	$self->{'QCSYS'} = $3;
 	$self->{'SYSTEM'} = $4;
+	carp "SYSTEM entity has two identifiers\n" if (defined $7);
       }
       $self->{'WSRT'} = _lftoce($8);
       # Need to access external entities here
+      $self->_getexternal if ($self->{'VALIDATING'} and $self->{'PARAM'});
     } elsif ($entdef =~ /^([\"\'])(.*?)\1(\s*)>$/s) {
       $self->{'EXTERNAL'} = 0;
       $self->{'QUOTECHAR'} = $1; # " -> &quot;   ' -> &apo;
@@ -159,6 +176,19 @@ sub _lftoce {
   return $txt;
 }
 
+# Get the content of external parameter entities
+sub _getexternal {
+  my $self = shift;
+
+  my $absuri = URI->new_abs($self->{'SYSTEM'}, $self->{'URI'});
+  #print "Fetch $self->{'NAME'} from ", $absuri->as_string, "\n";
+  my $xent = LWP::Simple::get($absuri);
+  carp "error fetching external entity\n" if (!defined $xent);
+  # Strip the leading textdef if there is one
+  $xent =~ s/^<\?.*\?>//s;
+  carp "external entity has no text declaration\n" if (!defined $&);
+  $self->{'ENTITYDEF'} = $xent;
+}
 
 1;
 __END__
@@ -237,5 +267,10 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> added fetching of external
+entities and improved entity substitution.
 
 =cut

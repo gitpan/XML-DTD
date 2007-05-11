@@ -3,13 +3,15 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'		=> 'XML::DTD',
-    'VERSION'           => '0.04',
+    'VERSION'           => '0.05',
 #   'VERSION_FROM'	=> 'lib/XML/DTD.pm',
     'ABSTRACT_FROM'     => 'lib/XML/DTD.pm',
     'AUTHOR'            => 'Brendt Wohlberg <wohl@cpan.org>',
     'EXE_FILES'         => ['bin/dtdto'],
     'PREREQ_PM'         => {Getopt::Long => 0,
 			    File::Temp => 0,
+			    URI::file => 0,
+			    LWP::Simple => 0,
 			    Carp => 0},
     'NO_META'           => 1
 );

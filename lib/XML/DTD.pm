@@ -24,6 +24,7 @@ our $VERSION = '0.02';
 # Constructor
 sub new {
   my $arg = shift;
+  my $val = shift; # Parser is validating
 
   my $cls = ref($arg) || $arg;
   my $obj = ref($arg) && $arg;
@@ -40,6 +41,7 @@ sub new {
     $self->{'ATTLISTS'} = {};
     $self->{'ENTMAN'} = XML::DTD::EntityManager->new;
     $self->{'INCFLAG'} = 0;
+    $self->{'VALIDATING'} = $val;
   }
   bless $self, $cls;
   return $self;
@@ -50,8 +52,9 @@ sub new {
 sub fread {
   my $self = shift;
   my $fh = shift;
+  my $uri = shift;
 
-  my $r = $self->parse($fh);
+  my $r = $self->parse($fh, '', $uri);
   return ($r eq '')?1:0;
 }
 
@@ -60,8 +63,9 @@ sub fread {
 sub sread {
   my $self = shift;
   my $str = shift;
+  my $uri = shift;
 
-  my $r = $self->parse(undef, $str);
+  my $r = $self->parse(undef, $str, $uri);
   return ($r eq '')?1:0;
 }
 
@@ -181,21 +185,26 @@ XML::DTD - Perl module for parsing XML DTDs
 
 =item B<new>
 
-  $dtd = new XML::DTD;
+  $dtd = new XML::DTD [ ($val) ];
 
 Constructs a new XML::DTD object.
 
+Its parser will be validating, and hence will make parameter entity
+substitutions, if the argument C<$val> is present and non-zero.
+
 =item B<fread>
 
-  $dtd->fread(*FILEHANDLE);
+  $dtd->fread(*FILEHANDLE [, $uri]);
 
-Parse a DTD file.
+Parse a DTD file. If the URI is passed, it is used as the URI for
+the document entity.
 
 =item B<sread>
 
-  $dtd->sread($string);
+  $dtd->sread($string [, $uri]);
 
-Parse DTD text in a string.
+Parse DTD text in a string. If the URI is passed, it is used as the URI for
+the document entity.
 
 =item B<fwrite>
 
@@ -256,5 +265,10 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> added fetching of external
+entities and improved entity substitution.
 
 =cut

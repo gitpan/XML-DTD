@@ -9,7 +9,6 @@ our @ISA = qw();
 
 our $VERSION = '0.01';
 
-
 # Constructor
 sub new {
   my $arg = shift;
@@ -83,7 +82,43 @@ sub pevalue {
   $peref = $1 if ($peref =~ /^%(.+);$/);
   my $ent = $self->{'PARAMETER'}->{$peref};
   if (defined $ent) {
-    return $ent->value;
+    if ($ent->isextern) {
+      # The value of an external entity is just itself
+      return $ent->value;
+    } else {
+      # The value of an internal entity has character and
+      # parameter entity expansion cattried out on it
+      return $self->entitysubst($ent->value);
+    }
+  } else {
+    return undef;
+  }
+}
+
+# Lookup a parameter entity declaration and return
+# its expansion, otherwise return the peref
+sub peexpand {
+  my $self = shift;
+  my $peref = shift;
+
+  my $peval = $self->pevalue($peref);
+  if (defined $peval) {
+    $peref = $peval;
+  } else {
+    $peref = '%'.$peref.';';
+  }
+  return $peref;
+}
+
+# Lookup a parameter entity's containing URI
+sub peuri {
+  my $self = shift;
+  my $peref = shift;
+
+  $peref = $1 if ($peref =~ /^%(.+);$/);
+  my $ent = $self->{'PARAMETER'}->{$peref};
+  if (defined $ent) {
+    return $ent->uri;
   } else {
     return undef;
   }
@@ -120,6 +155,22 @@ sub gevalue {
 }
 
 
+# Convert a character entity declaration
+sub cevalue {
+  my $self = shift;
+  my $ceref = shift;
+
+  $ceref = $1 if ($ceref =~ /^\&#(.+);$/);
+  if ($ceref =~ /^x([0-9a-fA-F]+)$/) {
+    return chr hex $1;
+  } elsif ($ceref =~ /^[0-9]+$/) {
+    return chr $ceref;
+  } else {
+    return undef;
+  }
+}
+
+
 # Perform entity substitution in text
 sub entitysubst {
   my $self = shift;
@@ -128,18 +179,29 @@ sub entitysubst {
   my $entv;
   my $lt = '';
   my $rt = $txt;
-  while ($rt =~ /(%|\&)([\w\.:\-_]+);/) {
+  while($rt =~ /(?:(%|\&)([\w\.:\-_]+)|(?:\&#(([0-9]+)|(x[0-9a-fA-F]+))));/) {
     $rt = $';
     $lt .= $`;
-    if ($1 eq '%') {
-      $entv = $self->pevalue($2);
+    my ($type, $val);
+    if (defined $1) {
+      # Entity ref or parameter ref
+      ($type, $val) = ($1, $2);
+      if ($type eq '%') {
+	# Substitute parameter refs
+        $entv = $self->pevalue($type.$val.';');
+      } else {
+	# Bypass entity ref
+	$entv = $type.$val.';';
+      }
     } else {
-      $entv = $self->gevalue($2);
+      # Character ref
+      ($type, $val) = ('&', '#'.$3);
+      $entv = $self->cevalue($type.$val.';');
     }
     if (defined $entv) {
       $lt .= $entv;
     } else {
-      $lt .= $1.$2.';';
+      $lt .= $type.$val.';';
       carp 'undefined entity referenced';
     }
   }
@@ -201,6 +263,15 @@ Insert a parameter entity declaration.
  my $val = $em->pevalue('%a;');
 
 Lookup a parameter entity value.
+Recursively expands internal parameter
+and character entity references.
+Leaves general entity references unmodified.
+
+May also be called as:
+
+ my $val = $em->pevalue('a');
+
+with the same effect.
 
 =item B<insertge>
 
@@ -211,15 +282,60 @@ Insert a general entity declaration.
 
 =item B<gevalue>
 
- my $val = $em->pevalue('&a;');
+ my $val = $em->gevalue('&a;');
 
 Lookup a general entity value.
+
+May also be called as:
+
+ my $val = $em->gevalue('a');
+
+with the same effect.
+
+=item B<cevalue>
+
+ my $txt = $em->cevalue('&#x3c;');
+
+Convert a character entity declaration. The example returns the
+character C<< < >>.
+
+May also be called as:
+
+ my $val = $em->peexpand('x3c');
+
+with the same effect.
+
+=item B<peexpand>
+
+ my $val = $em->peexpand('%a;');
+
+Lookup a parameter entity declaration and return
+its expansion as in L<pevalue> if it exists,
+otherwise return the peref.
+
+May also be called as:
+
+ my $val = $em->peexpand('a');
+
+with the same effect. Note: returns C<%a;> if there is
+no definition of C<a>, even if called in this form.
 
 =item B<entitysubst>
 
  my $txt = $em->entitysubst('abc &a; def');
 
 Perform entity substitution in text.
+Recursively expands internal parameter
+and character entity references.
+Leaves general entity references unmodified.
+
+For details see
+sections I<4.4 XML Processor Treatment of Entities and References>
+(L<http://www.w3.org/TR/2006/REC-xml-20060816/#entproc>)
+and I<4.5 Construction of Entity Replacement Text>
+(L<http://www.w3.org/TR/2006/REC-xml-20060816/#intern-replacement>)
+in I<Extensible Markup Language (XML) 1.0 (Fourth Edition)>
+(L<http://www.w3.org/TR/2006/REC-xml-20060816/>)
 
 =back
 
@@ -237,5 +353,10 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> added fetching of external
+entities and improved entity substitution.
 
 =cut

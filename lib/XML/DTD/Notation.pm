@@ -35,6 +35,61 @@ sub new {
 }
 
 
+# Return the notation name
+sub name {
+  my $self = shift;
+
+  return $self->{'NAME'};
+}
+
+
+# Return the notation sysid
+sub sysid {
+  my $self = shift;
+
+  return $self->{'SYSTEM'};
+}
+
+
+# Return the notation pubid
+sub pubid {
+  my $self = shift;
+
+  return $self->{'PUBLIC'};
+}
+
+
+# Parse the notation declaration
+sub _parse {
+  my $self = shift;
+  my $entman = shift;
+  my $eltdcl = shift;
+
+  if ($eltdcl=~/<\!NOTATION\s+([\w\.:\-_]+|%[\w\.:\-_]+;)\s+(SYSTEM|PUBLIC)\s+([\"\'])(.*?)\3\s+(?:([\"\'])(.*?)\5)?\s*>/s) {
+    my $name = $1;
+    my $type = defined($2) ? $2 : '';
+
+    if ($type eq 'SYSTEM') {
+      $self->{'SYSTEM'} = $4;
+      carp("SYSTEM notation has two identifiers\n") if (defined $6);
+    } elsif ($type eq 'PUBLIC') {
+      $self->{'SYSTEM'} = $6 if (defined $6);
+      $self->{'PUBLIC'} = $4;
+    } else {
+      carp("notation neither PUBLIC nor SYSTEM\n");
+    }
+
+    $name = $self->_entitymanager->peexpend($name)
+      if ($name =~ /^%([\w\.:\-_]+);$/);
+
+    $self->{'NAME'} = $name;
+
+  } else {
+    carp 'error parsing element name and contentspec';
+  }
+}
+
+
 1;
 __END__
 
@@ -61,6 +116,24 @@ declaration in a DTD. The following methods are provided.
 
 Construct a new XML::DTD::Notation object.
 
+=item B<name>
+
+ print $not->name;
+
+Return the notation name
+
+=item B<sysid>
+
+ print $not->sysid;
+
+Return the notation sysid
+
+=item B<pubid>
+
+ print $not->pubid;
+
+Return the notation pubid
+
 =back
 
 =head1 SEE ALSO
@@ -77,5 +150,10 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> improved parsing of NOTATION
+declarations.
 
 =cut

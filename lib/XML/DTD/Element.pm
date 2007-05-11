@@ -93,9 +93,12 @@ sub _parse {
     $self->{'WS1'} = $3;
     my $cntspc = $4;
     $self->{'WS2'} = $5;
-    # Still need to handle name being a peref
+
+    $name = $self->_entitymanager->peexpend($name)
+      if ($name =~ /^%([\w\.:\-_]+);$/);
+
     $self->{'NAME'} = $name;
-    #$cntspc = $entman->entitysubst($cntspc);
+
     $self->{'CONTENTSPECTEXT'} = $cntspc;
     $self->{'CONTENTSPEC'} = XML::DTD::ContentModel->new($cntspc, $entman);
   } else {
@@ -174,5 +177,9 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> improved entity substitution.
 
 =cut

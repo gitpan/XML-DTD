@@ -66,6 +66,11 @@ sub isa {
 sub children {
   my $self = shift;
 
+  if (@_) {
+    my $chldlst = shift;
+    $self->{'chldlst'} = $chldlst;
+  }
+
   return $self->{'chldlst'}
 }
 
@@ -73,6 +78,11 @@ sub children {
 # Return the element name if the object is the leaf node of the tree
 sub element {
   my $self = shift;
+
+  if (@_) {
+    my $element = shift;
+    $self->{'eltname'} = $element;
+  }
 
   return $self->{'eltname'}
 }
@@ -82,6 +92,11 @@ sub element {
 sub combineop {
   my $self = shift;
 
+  if (@_) {
+    my $combnop = shift;
+    $self->{'combnop'} = $combnop;
+  }
+
   return $self->{'combnop'};
 }
 
@@ -89,6 +104,11 @@ sub combineop {
 # Return the occurrence operator (i.e. "?","+", or "*")
 sub occurop {
   my $self = shift;
+
+  if (@_) {
+    my $occurop = shift;
+    $self->{'occurop'} = $occurop;
+  }
 
   return $self->{'occurop'};
 }
@@ -271,8 +291,13 @@ sub _parse {
   # Substitute entity values for references
   if (defined $entmn and
       $cmstr =~ /^%([\w\.:\-_]+);$|^\(%([\w\.:\-_]+);\)$/) {
-    $self->{'peref'} = defined($1)?$1:$2;
-    $cmstr = $entmn->pevalue($self->{'peref'});
+    my $paren = defined $2;
+    $self->{'peref'} = $paren ? $2 : $1;
+    my $entv = $entmn->pevalue($self->{'peref'});
+    if (defined $entv) {
+      $cmstr = $entv;
+      $cmstr = '(' . $cmstr . ')' if ($paren);
+    }
   }
 
   # Temporary
@@ -375,7 +400,7 @@ sub _parenmatch {
     } else { # $posl >= $posr
       # a ) is next
       $level--;
-      if($level < 0) {
+      if ($level < 0) {
 	carp "Parenthesis matching error in $str\n";
 	return undef;
       }
@@ -544,23 +569,42 @@ Test object type.
 
 Return the list of child objects (subexpressions).
 
+ my $objlst = $cm->children($children);
+
+Sets the list of child objects (subexpressions). Returns the new value.
+
 =item B<element>
 
  my $name = $cm->element;
 
 Return the element name if the object has no subexpressions.
 
+ my $name = $cm->element($elename);
+
+Set the element name. The element name should only be set
+if the object has no subexpressions. Returns the new value.
+
 =item B<combineop>
 
  my $op = $cm->combineop;
 
-Return the combination operator ("," or "|").
+Return the combination operator (",", "|" or C<undef>).
+
+ my $op = $cm->combineop($combineop);
+
+Set the combination operator (",", "|", or C<undef>).
+Returns the new value.
 
 =item B<occurop>
 
  my $op = $cm->occurop;
 
-Return the occurrence operator ("?","+", or "*").
+Return the occurrence operator ("?", "+", "*", or C<undef>).
+
+ my $op = $cm->occurop($occurop);
+
+Set the occurrence operator ("?", "+", "*", or C<undef>).
+Returns the new value.
 
 =item B<isatomic>
 
@@ -630,6 +674,7 @@ License (GPL), described in the GPL file included in this distribution.
 =head1 ACKNOWLEDGMENTS
 
 Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> fixed a bug in the _parse
-function and provided an improved implementation of _parenmatch.
+function, provided an improved implementation of _parenmatch, and
+modified accessor methods to allow setting of relevant values.
 
 =cut

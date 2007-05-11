@@ -82,6 +82,19 @@ sub attribute {
   return $self->{'ATTDEFS'}->{$name};
 }
 
+# Merge another attribute list's attribute declarations with this one's.
+# Where the same attribute name is declared in both, keep the one already
+# in $self
+sub merge {
+  my $self = shift;
+  my $attlst = shift;
+  foreach my $aname (@{$attlst->attribnames}) {
+    if (!exists $self->{'ATTDEFS'}{$aname}) {
+      push @{$self->{'ATTNAMES'}}, $aname;
+      $self->{'ATTDEFS'}->{$aname} = $attlst->attribute($aname);
+    }
+  }
+}
 
 # Parse the element declaration
 sub _parse {
@@ -93,23 +106,39 @@ sub _parse {
     $self->{'WS0'} = $1;
     my $name = $2;
     my $attdefs = $3;
-    # Still need to handle name being a peref
+
+    $name = $self->_entitymanager->peexpend($name)
+      if ($name =~ /^%([\w\.:\-_]+);$/);
+
     $self->{'NAME'} = $name;
-    $attdefs = $entman->entitysubst($attdefs);
     $self->{'ATTNAMES'} = [];
     $self->{'ATTDEFS'} = {};
     my ($aname,$atype,$dflt,$ws0,$ws1,$ws2);
-    while ($attdefs =~ /^(\s+)([\w\.:\-_]+)(\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"|\([^\(\)]+\))(\s+)(\#REQUIRED|\#IMPLIED|(?:(?:\#FIXED\s+)(?:[\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"))|(?:\'[^\']+\'|\"[^\"]+\"))/s) {
+    while ($attdefs =~ /^(\s+)([\w\.:\-_]+)(\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"|\([^\(\)]+\))(\s+)(\#REQUIRED|\#IMPLIED|(?:(\#FIXED\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"))|(\'[^\']+\'|\"[^\"]+\"))/s) {
       $ws0 = $1;
       $aname = $2;
       $ws1 = $3;
       $atype = $4;
       $ws2 = $5;
       $dflt = $6;
+
+      # Only do substitutions on the default attribute values.
+      if (defined $7) {
+      	$dflt = $7;
+	my $attval = $8;
+        $dflt = $dflt.$entman->entitysubst($attval);
+      } elsif (defined $9) {
+	my $attval = $9;
+        $dflt = $entman->entitysubst($attval);
+      }
+
       $attdefs = $';
-      push @{$self->{'ATTNAMES'}}, $aname;
-      $self->{'ATTDEFS'}->{$aname} =
-             XML::DTD::AttDef->new($aname, $atype, $dflt, $ws0, $ws1, $ws2);
+      # The first declaration is binding
+      if (!exists($self->{'ATTDEFS'}->{$aname})) {
+        push @{$self->{'ATTNAMES'}}, $aname;
+	$self->{'ATTDEFS'}->{$aname} =
+               XML::DTD::AttDef->new($aname, $atype, $dflt, $ws0, $ws1, $ws2);
+      }
     }
     if ($attdefs =~ /^\s*$/) {
       $self->{'WS1'} = $attdefs;
@@ -170,6 +199,16 @@ Return the name of the element with which the attribute list is associated.
 
 Return a list of attribute names.
 
+=item B<merge>
+
+  $attlist->merge($otherattlist);
+
+Return a list of attribute names.
+
+Merge another attribute list's attribute declarations with this one's.
+Where the same attribute name is declared in both, keep the one already
+in <$attlist>.
+
 =back
 
 =head1 SEE ALSO
@@ -186,5 +225,11 @@ Copyright (C) 2004-2006 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
+
+=head1 ACKNOWLEDGMENTS
+
+Peter Lamb E<lt>Peter.Lamb@csiro.auE<gt> improved entity substitution
+and corrected handling of multiple declarations of attributes for the
+same element.
 
 =cut
