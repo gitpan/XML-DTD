@@ -10,7 +10,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Constructor

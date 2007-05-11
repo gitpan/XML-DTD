@@ -7,7 +7,7 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Constructor
