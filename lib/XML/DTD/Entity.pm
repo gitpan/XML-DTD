@@ -11,7 +11,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 # Constructor
@@ -180,7 +180,7 @@ sub _lftoce {
 sub _getexternal {
   my $self = shift;
 
-  my $absuri = URI->new_abs($self->{'SYSTEM'}, $self->{'URI'});
+  my $absuri = URI->new_abs($self->{'SYSTEM'}, URI->new($self->{'URI'}));
   #print "Fetch $self->{'NAME'} from ", $absuri->as_string, "\n";
   my $xent = LWP::Simple::get($absuri);
   carp "error fetching external entity\n" if (!defined $xent);

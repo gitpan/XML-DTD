@@ -9,7 +9,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 
 # Constructor
@@ -79,7 +79,7 @@ sub _parse {
       carp("notation neither PUBLIC nor SYSTEM\n");
     }
 
-    $name = $self->_entitymanager->peexpend($name)
+    $name = $entman->peexpand($name)
       if ($name =~ /^%([\w\.:\-_]+);$/);
 
     $self->{'NAME'} = $name;

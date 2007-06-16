@@ -21,7 +21,7 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 # Constructor
@@ -125,7 +125,8 @@ sub parse {
         if (!$self->{'EXPANDINGPE'});
     } elsif ($dcllt eq '%') { # Parameter entity reference
       ($dcl, $dclrt, $rt) = _scanuntil($fh, $rt, ';', 0);
-      push @{$self->{'ALL'}}, XML::DTD::PERef->new($self->_entitymanager, $dcl)
+      push @{$self->{'ALL'}},
+           XML::DTD::PERef->new($self->_entitymanager, '%'.$dcl.';')
         if (!$self->{'EXPANDINGPE'});
       if ($self->{'VALIDATING'}) {
 	my $expanding = $self->{'EXPANDINGPE'};
@@ -188,7 +189,8 @@ sub _scanuntil {
       if (defined $fh and $line = <$fh>) {
 	$buf .= $line;
       } else {
-        $left = $match = $right = '';
+        $left = $buf;
+        $buf = $match = $right = '';
       }
     }
   }
@@ -259,7 +261,7 @@ sub _parsecondsec {
   $m = $&;
   $r = $';
 
-  $cond = $self->_entitymanager->peexpend($cond)
+  $cond = $self->_entitymanager->peexpand($cond)
     if ($cond =~ /^%([\w\.:\-_]+);$/);
 
   if ($cond eq 'IGNORE') { # An IGNORE section

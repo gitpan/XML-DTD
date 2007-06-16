@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!--
      XSL stylesheet for converting XML representation of a DTD to HTML
-     Brendt Wohlberg     1 June 2006
+     Brendt Wohlberg     8 June 2007
   -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -373,6 +373,13 @@
             <xsl:value-of select="external/system"/>
             <xsl:value-of select="external/system/@qchar"/>
           </xsl:when>
+          <xsl:when test="@type='param' and child::internal">
+            <xsl:value-of select="internal/@qchar"/>
+            <xsl:call-template name="lftobr">
+              <xsl:with-param name="x" select="internal"/>
+            </xsl:call-template>
+            <xsl:value-of select="internal/@qchar"/>
+          </xsl:when>
           <xsl:otherwise>
             <xsl:value-of select="@qchar"/>
             <xsl:value-of select="."/>
@@ -382,6 +389,27 @@
       </div>
     </div>
   </div>
+</xsl:template>
+
+
+
+<!-- Named template that attempts to retain formatting of strings with
+     linefeeds --> 
+<xsl:template name="lftobr">
+  <xsl:param name="x"/>
+  
+  <xsl:choose>
+    <xsl:when test="contains($x,'&#xA;')">
+      <xsl:value-of select="substring-before($x,'&#xA;')"/>
+      <br/>
+      <xsl:call-template name="lftobr">
+        <xsl:with-param name="x" select="substring-after($x,'&#xA;')"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="$x"/>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 
@@ -445,6 +473,7 @@
     width: 80%;
     margin-left: 1em;
     margin-right: 1em;
+    margin-bottom: 1em;
     }
     .entdef {
     padding-top: 2em;

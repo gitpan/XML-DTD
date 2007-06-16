@@ -1,4 +1,4 @@
-XML/DTD version 0.05
+XML/DTD version 0.06
 ====================
 
 This package consists of the XML::DTD Perl module as well as
@@ -24,6 +24,8 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
   Carp
+  URI::file
+  LWP::Simple
   Getopt::Long   (used by the dtdto script)
   File::Temp     (used by the dtdto script)
   libxml/libxslt (used by the dtdto script)

@@ -7,7 +7,7 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 # Constructor
 sub new {
@@ -175,14 +175,15 @@ sub cevalue {
 sub entitysubst {
   my $self = shift;
   my $txt = shift;
+  my $gesf = shift; # Flag selecting substitution of general entity refs
 
-  my $entv;
   my $lt = '';
   my $rt = $txt;
   while($rt =~ /(?:(%|\&)([\w\.:\-_]+)|(?:\&#(([0-9]+)|(x[0-9a-fA-F]+))));/) {
     $rt = $';
     $lt .= $`;
     my ($type, $val);
+    my $entv;
     if (defined $1) {
       # Entity ref or parameter ref
       ($type, $val) = ($1, $2);
@@ -190,8 +191,12 @@ sub entitysubst {
 	# Substitute parameter refs
         $entv = $self->pevalue($type.$val.';');
       } else {
-	# Bypass entity ref
-	$entv = $type.$val.';';
+	if ($gesf) {
+	  $entv = $self->gevalue($type.$val.';');
+	} else {
+	  # Bypass entity ref
+	  $entv = $type.$val.';';
+	}
       }
     } else {
       # Character ref
@@ -202,6 +207,33 @@ sub entitysubst {
       $lt .= $entv;
     } else {
       $lt .= $type.$val.';';
+      carp 'undefined entity referenced';
+    }
+  }
+  $lt .= $rt;
+  return $lt;
+}
+
+
+# Perform entity substitution in text
+sub includeaspe {
+  my $self = shift;
+  my $txt = shift;
+
+  my $lt = '';
+  my $rt = $txt;
+  while($rt =~ /(%[\w\.:\-_]+;)/) {
+    $rt = $';
+    $lt .= $`;
+    my $entv;
+    if (defined $1) {
+	# Substitute parameter ref
+        $entv = $self->pevalue($1);
+    }
+    if (defined $entv) {
+      $lt .= ' '.$entv.' ';
+    } else {
+      $lt .= $1;
       carp 'undefined entity referenced';
     }
   }

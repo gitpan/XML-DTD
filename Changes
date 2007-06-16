@@ -22,3 +22,7 @@ Revision history for Perl extension XML::DTD.
 	- Incorporated a number of significant improvements (including
 	  bug fixes, more robust parsing, fetching of external entities,
 	  and improved entity substitution) from Peter Lamb.
+
+0.06  2007-06-16
+	- Some bug fixes, and improvements to dtdto HTML and DocBook
+	  output.

@@ -2,7 +2,7 @@
 <!DOCTYPE xsl:stylesheet [ <!ENTITY nbsp "&#160;"> ]>
 <!--
      XSL stylesheet for converting XML representation of a DTD to Docbook
-     Brendt Wohlberg     1 June 2006
+     Brendt Wohlberg     8 June 2007
   -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -88,7 +88,7 @@
 
   <!-- Details of general entities -->
   <xsl:if test="$expand-general-entities!=1 and //entity[@type='gen']">
-    <section>
+    <section id="gentsec">
       <title>General Entities</title>  
       <xsl:for-each select="entity[@type='gen']">
         <xsl:call-template name="entity"/>
@@ -98,7 +98,7 @@
 
   <!-- Details of parameter entities -->
   <xsl:if test="$expand-parameter-entities!=1 and //entity[@type='param']">
-    <section>
+    <section id="pentsec">
       <title>Parameter Entities</title>
       <xsl:for-each select="entity[@type='param']">
         <xsl:call-template name="entity"/>
@@ -107,7 +107,7 @@
   </xsl:if>
     
   <!-- Details of elements -->
-  <section>
+  <section id="eltsec">
     <title>Elements</title>
     <xsl:for-each select="element">
       <xsl:call-template name="element"/>
@@ -122,7 +122,7 @@
 <xsl:template match="element" name="element">
   <xsl:variable name="name" select="@name"/>
 
-  <section role="dtdeltsec"> 
+  <section role="dtdeltsec" id="{concat('elt-',$name,'-',generate-id(.))}"> 
     <!-- Section title consisting of element name -->
     <title>
       <emphasis role="dtdelttitle">
@@ -360,7 +360,7 @@
 
 <!-- Template for processing entity declarations -->
 <xsl:template match="entity" name="entity">
-  <section>
+  <section id="{concat('ent-',@name,'-',generate-id(.))}">
     <title>
       <emphasis role="entdeftitle">
         <anchor>
@@ -425,6 +425,13 @@
                     <xsl:value-of select="external/system"/>
                     <xsl:value-of select="external/system/@qchar"/>
                   </xsl:when>
+                  <xsl:when test="@type='param' and child::internal">
+                    <xsl:value-of select="internal/@qchar"/>
+                    <xsl:call-template name="lftolb">
+                      <xsl:with-param name="x" select="internal"/>
+                    </xsl:call-template>
+                    <xsl:value-of select="internal/@qchar"/>
+                  </xsl:when>
                   <xsl:otherwise>
                     <xsl:value-of select="@qchar"/>
                     <xsl:value-of select="."/>
@@ -440,5 +447,27 @@
   </section>
 </xsl:template>
   
+
+
+<!-- Named template that attempts to retain formatting of strings with
+     linefeeds --> 
+<xsl:template name="lftolb">
+  <xsl:param name="x"/>
+  
+  <xsl:choose>
+    <xsl:when test="contains($x,'&#xA;')">
+      <xsl:value-of select="substring-before($x,'&#xA;')"/>
+      <xsl:text>&#xA;</xsl:text>
+      <xsl:processing-instruction name="lb"/>
+      <xsl:call-template name="lftolb">
+        <xsl:with-param name="x" select="substring-after($x,'&#xA;')"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:value-of select="$x"/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 
 </xsl:stylesheet>

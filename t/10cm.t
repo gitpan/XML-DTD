@@ -4,14 +4,14 @@
 
 #########################
 
-use Test::More tests => 1 + 2*11;
+use Test::More tests => 1 + 2*13;
 BEGIN { use_ok('XML::DTD::ContentModel') };
 
 #########################
 
 my $cmstr = [ '(a)', '(a?)', '(a+)', '(a*)',
 	      '(a,b,c,d)', '(a?,b?,c?,d?)',
-	      '(a|b|c|d)', '(a|b|c|d)+',
+	      '(a|b|c|d)', '(a|b|c|d)*', '(a|b|c|d)+', '(#PCDATA|a|b|c)*',
 	      '(a,b?,(c|d))',
 	      '(a,b?,(c|d)+,e*)',
 	      '(a,b,((a,b)|(c|d))*)' ];

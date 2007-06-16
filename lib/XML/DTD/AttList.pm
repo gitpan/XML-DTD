@@ -10,7 +10,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 
 # Constructor
@@ -107,8 +107,10 @@ sub _parse {
     my $name = $2;
     my $attdefs = $3;
 
-    $name = $self->_entitymanager->peexpend($name)
+    $name = $entman->peexpand($name)
       if ($name =~ /^%([\w\.:\-_]+);$/);
+
+    $attdefs = $entman->includeaspe($attdefs);
 
     $self->{'NAME'} = $name;
     $self->{'ATTNAMES'} = [];
@@ -126,10 +128,10 @@ sub _parse {
       if (defined $7) {
       	$dflt = $7;
 	my $attval = $8;
-        $dflt = $dflt.$entman->entitysubst($attval);
+        $dflt = $dflt . $entman->entitysubst($attval, 1);
       } elsif (defined $9) {
 	my $attval = $9;
-        $dflt = $entman->entitysubst($attval);
+        $dflt = $entman->entitysubst($attval, 1);
       }
 
       $attdefs = $';
@@ -137,7 +139,7 @@ sub _parse {
       if (!exists($self->{'ATTDEFS'}->{$aname})) {
         push @{$self->{'ATTNAMES'}}, $aname;
 	$self->{'ATTDEFS'}->{$aname} =
-               XML::DTD::AttDef->new($aname, $atype, $dflt, $ws0, $ws1, $ws2);
+               XML::DTD::AttDef->new($entman, $aname, $atype, $dflt, $ws0, $ws1, $ws2);
       }
     }
     if ($attdefs =~ /^\s*$/) {

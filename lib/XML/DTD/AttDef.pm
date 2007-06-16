@@ -7,12 +7,13 @@ use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 # Constructor
 sub new {
   my $arg = shift;
+  my $man = shift;
   my $name = shift;
   my $type = shift;
   my $dflt = shift;
@@ -32,7 +33,7 @@ sub new {
     # Called as the main constructor
     $self = { };
     bless $self, $cls;
-    $self->_parse($name, $type, $dflt, $ws0, $ws1, $ws2);
+    $self->_parse($man, $name, $type, $dflt, $ws0, $ws1, $ws2);
   }
   return $self;
 }
@@ -60,10 +61,10 @@ sub writexmlelts {
   $xmlw->open('attdef', {'name' => $self->{'NAME'},
 			 'ltws' => $self->{'WS0'}});
   $xmlw->open('atttype', {'ltws' => $self->{'WS1'}});
-  $xmlw->pcdata($self->{'ATTTYPE'});
+  $xmlw->pcdata($self->type);
   $xmlw->close;
   $xmlw->open('defaultdecl', {'ltws' => $self->{'WS2'}});
-  $xmlw->pcdata($self->{'DEFAULTDECL'});
+  $xmlw->pcdata($self->default);
   $xmlw->close;
   $xmlw->close;
 }
@@ -96,6 +97,7 @@ sub default {
 # Parse the element declaration
 sub _parse {
   my $self = shift;
+  my $entman = shift;
   my $name = shift;
   my $type = shift;
   my $dflt = shift;
@@ -103,7 +105,7 @@ sub _parse {
   my $ws1 = shift;
   my $ws2 = shift;
 
-  $name = $self->_entitymanager->peexpend($name)
+  $name = $entman->peexpand($name)
     if ($name =~ /^%([\w\.:\-_]+);$/);
 
   $self->{'NAME'} = $name;
@@ -135,7 +137,8 @@ __END__
 =head1 SYNOPSIS
 
   use XML::DTD::AttDef;
-  my $atd = XML::DTD::AttDef::new($name,$atttype,$defaultdecl);
+  my $entman = XML::DTD::EntityManager->new;
+  my $atd = XML::DTD::AttDef::new($entman,$name,$atttype,$defaultdecl);
 
 =head1 DESCRIPTION
 

@@ -285,19 +285,17 @@ sub _parse {
   my $cmstr = shift; # Content model string
   my $entmn = shift; # Entity manager
 
-  # Remove spaces
-  $cmstr =~ s/\s+//g;
+  $cmstr =~ s/\s+//g; # Remove spaces
 
-  # Substitute entity values for references
+  # Substitute entity values for references if entity is entire content model
   if (defined $entmn and
       $cmstr =~ /^%([\w\.:\-_]+);$|^\(%([\w\.:\-_]+);\)$/) {
     my $paren = defined $2;
     $self->{'peref'} = $paren ? $2 : $1;
     my $entv = $entmn->pevalue($self->{'peref'});
-    if (defined $entv) {
-      $cmstr = $entv;
-      $cmstr = '(' . $cmstr . ')' if ($paren);
-    }
+    my $cmpnd = ($entv =~ /^[^\(]+\||\,[^\)]+$/);
+    $cmstr = ($paren or $cmpnd)?"($entv)":$entv if (defined $entv);
+    $cmstr =~ s/\s+//g; # Remove spaces
   }
 
   # Temporary
@@ -316,7 +314,7 @@ sub _parse {
     # Set working string to content of parentheses and note occurence operator
     $cmstr = $1;
     $self->{'occurop'} = $2;
-    ##print "EXPR0: |$cmstr|\n";
+    ##print STDERR "EXPR0: |$cmstr|\n";
     # Deal with first sequence/choice child expression
     my $expr;
     # Check whether string has no parentheses preceding the first
@@ -324,7 +322,7 @@ sub _parse {
     if ($cmstr =~ /^([^\(\)\,\|]*)(\,|\|)/) { # Combine operator first
       $expr = $1;
       $self->{'combnop'} = $2;
-      #print "CMBNOP: $2   $cmstr\n";
+      ##print STDERR "0CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
       $cmstr = $';
       push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
     } else { # Parenthesis first
@@ -334,7 +332,7 @@ sub _parse {
       if ($pst =~ /^(\?|\+|\*)?(\,|\|)?/) {
 	$expr = $mat.(defined($1)?$1:'');
 	$self->{'combnop'} = $2;
-	#print "CMBNOP: $2   $cmstr\n";
+	##print STDERR "1CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
 	$cmstr = $';
 	push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
       } else {
@@ -345,13 +343,14 @@ sub _parse {
 
     # Work through remaining sequence/choice child expressions
     while ($cmstr ne '') {
-      ##print "EXPRn: |$cmstr|\n";
+      ##print STDERR "EXPRn: |$cmstr|\n";
       # Check whether string has no parentheses preceding the first
       # sequence or choice character
       if ($cmstr =~ /^([^\(\)\,\|]*)(\,|\||$)/) { # Combine operator first
 	$expr = $1;
 	# Should check that combine op $2 is correct
 	$cmstr = $';
+	##print STDERR "2CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
 	push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
       } else { # Parenthesis first
 	my ($mat, $pst) = _parenmatch($cmstr);
@@ -361,6 +360,7 @@ sub _parse {
 	  $expr = $mat.(defined($1)?$1:'');
 	  # Should check that combine op $2 is correct
 	  $cmstr = $';
+	  ##print STDERR "3CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
 	  push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
 	} else {
 	  carp "invalid content model: $cmstr\n";

@@ -10,7 +10,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 # Constructor
@@ -94,7 +94,7 @@ sub _parse {
     my $cntspc = $4;
     $self->{'WS2'} = $5;
 
-    $name = $self->_entitymanager->peexpend($name)
+    $name = $entman->peexpand($name)
       if ($name =~ /^%([\w\.:\-_]+);$/);
 
     $self->{'NAME'} = $name;
