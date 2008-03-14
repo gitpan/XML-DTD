@@ -10,7 +10,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 
 # Constructor
@@ -116,7 +116,7 @@ sub _parse {
     $self->{'ATTNAMES'} = [];
     $self->{'ATTDEFS'} = {};
     my ($aname,$atype,$dflt,$ws0,$ws1,$ws2);
-    while ($attdefs =~ /^(\s+)([\w\.:\-_]+)(\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"|\([^\(\)]+\))(\s+)(\#REQUIRED|\#IMPLIED|(?:(\#FIXED\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"))|(\'[^\']+\'|\"[^\"]+\"))/s) {
+    while ($attdefs =~ /^(\s+)([\w\.:\-_]+)(\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"|\([^\(\)]+\))(\s+)(\#REQUIRED|\#IMPLIED|(?:(\#FIXED\s+)([\w\.:\-_]+|\'[^\']+\'|\"[^\"]+\"))|(\'[^\']*\'|\"[^\"]*\"))/s) {
       $ws0 = $1;
       $aname = $2;
       $ws1 = $3;

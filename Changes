@@ -26,3 +26,7 @@ Revision history for Perl extension XML::DTD.
 0.06  2007-06-16
 	- Some bug fixes, and improvements to dtdto HTML and DocBook
 	  output.
+
+0.07  2008-03-14
+	- Fixed bug in parsing of ATTLIST declaration with empty
+	  string following CDATA.

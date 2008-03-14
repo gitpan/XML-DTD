@@ -252,7 +252,7 @@ Return atribute list object associated with the specified name.
 
 =head1 SEE ALSO
 
-L<XML::DTD::Parse>, The XML 1.0 W3C Recommendation at
+L<XML::DTD::Parser>, The XML 1.0 W3C Recommendation at
 http://www.w3.org/TR/REC-xml/
 
 =head1 AUTHOR
