@@ -30,3 +30,6 @@ Revision history for Perl extension XML::DTD.
 0.07  2008-03-14
 	- Fixed bug in parsing of ATTLIST declaration with empty
 	  string following CDATA.
+
+0.08  2008-11-11
+	- Synchronised package version with XML::DTD module version.

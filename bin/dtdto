@@ -1,7 +1,7 @@
 #!perl
 
 # This script parses a DTD and writes it out in a simple XML format
-# Copyright (C) Brendt Wohlberg <wohl@cpan.org>
+# Copyright (C) 2006-2008 Brendt Wohlberg <wohl@cpan.org>
 # Most recent modification: 10 June 2006
 
 use strict;

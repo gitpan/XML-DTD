@@ -19,7 +19,7 @@ use Carp;
 
 our @ISA = qw(XML::DTD::Parser);
 
-our $VERSION = '0.03';
+our $VERSION = '0.08';
 
 # Constructor
 sub new {
