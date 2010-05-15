@@ -1,15 +1,15 @@
 package XML::DTD::Text;
 
 use XML::DTD::Component;
+use XML::DTD::Error;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.01';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -27,10 +27,11 @@ sub new {
     bless $self, $cls;
   } else {
     # Called as the main constructor
-    carp "constructor called with undefined text\n" if (! defined($txt));
+    throw XML::DTD::Error("Constructor for XML::DTD::Textcalled ".
+			  "with undefined text") if (! defined($txt));
     $self = { };
     bless $self, $cls;
-    #$txt =~ s/\n/<br\/>/sg;
+    ##$txt =~ s/\n/<br\/>/sg;
     $self->define('wspace', $txt);
   }
   return $self;
@@ -101,7 +102,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

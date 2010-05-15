@@ -4,7 +4,7 @@
 
 #########################
 
-use Test::More tests => 1 + 2*10;
+use Test::More tests => 1 + 2*12;
 BEGIN { use_ok('XML::DTD') };
 
 #########################
@@ -131,3 +131,24 @@ ok($dtd->sread($txt));
 is($dtd->swrite(), $txt);
 
 
+
+$txt = <<EOF;
+<!ENTITY % x "(a|b)">
+<!ENTITY % y "(c|d)">
+<!ENTITY % z "(%x;,%y;)">
+<!ELEMENT aa %z;>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);
+
+
+
+$txt = <<EOF;
+<!ENTITY % w "aa">
+<!ELEMENT top (%w;*)>
+<!ELEMENT aa (a|b)>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);

@@ -1,15 +1,15 @@
 package XML::DTD::Notation;
 
 use XML::DTD::Component;
+use XML::DTD::Error;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.04';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -63,29 +63,29 @@ sub pubid {
 sub _parse {
   my $self = shift;
   my $entman = shift;
-  my $eltdcl = shift;
+  my $nttdcl = shift;
 
-  if ($eltdcl=~/<\!NOTATION\s+([\w\.:\-_]+|%[\w\.:\-_]+;)\s+(SYSTEM|PUBLIC)\s+([\"\'])(.*?)\3\s+(?:([\"\'])(.*?)\5)?\s*>/s) {
+  if ($nttdcl=~/<\!NOTATION\s+([\w\.:\-_]+|%[\w\.:\-_]+;)\s+(SYSTEM|PUBLIC)\s+([\"\'])(.*?)\3\s+(?:([\"\'])(.*?)\5)?\s*>/s) {
     my $name = $1;
     my $type = defined($2) ? $2 : '';
 
     if ($type eq 'SYSTEM') {
       $self->{'SYSTEM'} = $4;
-      carp("SYSTEM notation has two identifiers\n") if (defined $6);
+      throw XML::DTD::Error("SYSTEM notation has two identifiers in ".
+			      "definition: $nttdcl", $self) if (defined $6);
     } elsif ($type eq 'PUBLIC') {
       $self->{'SYSTEM'} = $6 if (defined $6);
       $self->{'PUBLIC'} = $4;
     } else {
-      carp("notation neither PUBLIC nor SYSTEM\n");
+      throw XML::DTD::Error("Notation neither PUBLIC nor SYSTEM in ".
+			      "definition: $nttdcl", $self);
     }
-
     $name = $entman->peexpand($name)
       if ($name =~ /^%([\w\.:\-_]+);$/);
-
     $self->{'NAME'} = $name;
 
   } else {
-    carp 'error parsing element name and contentspec';
+    throw XML::DTD::Error("Error parsing notation definition: $nttdcl", $self);
   }
 }
 
@@ -146,7 +146,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

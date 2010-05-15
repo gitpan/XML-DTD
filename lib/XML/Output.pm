@@ -3,9 +3,8 @@ package XML::Output;
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
-our $VERSION = '0.01';
+our $VERSION = '0.09';
 
 # Constructor
 sub new {
@@ -56,7 +55,7 @@ sub open {
   $self->{'PCDATA'} = 0;
   my $attq = (defined $cnfg->{'attrquote'})?$cnfg->{'attrquote'}:
     $self->{'ATTRQUOTE'};
-  #my $subst = (defined $cnfg->{'subst'})?$cnfg->{'subst'}:{};
+  ##my $subst = (defined $cnfg->{'subst'})?$cnfg->{'subst'}:{};
   my $fh = $self->{'FH'};
   my $indent = ' ' x (@{$self->{'STACK'}} * $self->{'INDENT'});
   my $cr = ($self->{'INIT'} == 1)?'':"\n";
@@ -92,10 +91,10 @@ sub close {
   my $cr = ($self->{'PCDATA'} == 1)?'':"\n";
   my $name = pop @{$self->{'STACK'}};
   my $fh = $self->{'FH'};
-  #print $fh $cr . $indent . "</$name>";
+  ##print $fh $cr . $indent . "</$name>";
   my $str = $cr . $indent . "</$name>";
   $self->{'PCDATA'} = 0;
-  #print $fh "\n" if (@{$self->{'STACK'}} == 0);
+  ##print $fh "\n" if (@{$self->{'STACK'}} == 0);
   $str .= "\n" if (@{$self->{'STACK'}} == 0);
   if (defined $fh) {
     print $fh $str;
@@ -115,8 +114,8 @@ sub empty {
   my $ecnfg = (defined $cnfg)?{ %$cnfg }:{};
   $ecnfg->{'empty'} = 1;
   $self->open($name, $attr, $ecnfg);
-  #$self->{'PCDATA'} = 1;
-  #$self->close();
+  ##$self->{'PCDATA'} = 1;
+  ##$self->close();
 }
 
 
@@ -268,7 +267,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

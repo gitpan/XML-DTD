@@ -33,3 +33,12 @@ Revision history for Perl extension XML::DTD.
 
 0.08  2008-11-11
 	- Synchronised package version with XML::DTD module version.
+
+0.09  2010-05-15
+	- Fixed some parsing problems causing the problem reported in 
+          rt.cpan.org bug 57072.
+        - In XSLT used by dtdto utility, fixed bug preventing display
+          of ENTITY and ELEMENT definitions within INCLUDE sections.
+	- Error handling is now via exceptions based on Error module.
+        - Added debug flag to dtdto utility.
+        - Improved documentation for a number of modules.

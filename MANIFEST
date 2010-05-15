@@ -13,6 +13,7 @@ lib/XML/DTD/ContentModel.pm
 lib/XML/DTD/Element.pm
 lib/XML/DTD/Entity.pm
 lib/XML/DTD/EntityManager.pm
+lib/XML/DTD/Error.pm
 lib/XML/DTD/FAState.pm
 lib/XML/DTD/Ignore.pm
 lib/XML/DTD/Include.pm

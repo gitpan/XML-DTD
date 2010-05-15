@@ -11,7 +11,7 @@ WriteMakefile(
 			    File::Temp => 0,
 			    URI::file => 0,
 			    LWP::Simple => 0,
-			    Carp => 0},
+			    Error => 0},
     'NO_META'           => 1
 );
 

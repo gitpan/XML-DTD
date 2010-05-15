@@ -1,23 +1,20 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [ <!ENTITY nbsp "&#160;"> ]>
 <!--
      XSL stylesheet for converting XML representation of a DTD to Docbook
-     Brendt Wohlberg     8 June 2007
+     Brendt Wohlberg     30 April 2010
   -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
                 exclude-result-prefixes="xlink" version="1.0">
 
-
-
-<xsl:output method="xml" indent="yes" encoding="iso-8859-1"/>
+<xsl:output method="xml" indent="yes"/>
 
 <!--
    <xsl:output method="xml" indent="yes"
     doctype-public="-//OASIS//DTD DocBook XML V4.1.2//EN"
-    doctype-system="http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
-    encoding="iso-8859-1" />
+    doctype-system="http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"/>
 -->
 
 
@@ -90,7 +87,7 @@
   <xsl:if test="$expand-general-entities!=1 and //entity[@type='gen']">
     <section id="gentsec">
       <title>General Entities</title>  
-      <xsl:for-each select="entity[@type='gen']">
+      <xsl:for-each select="//entity[@type='gen']">
         <xsl:call-template name="entity"/>
       </xsl:for-each>
     </section>
@@ -100,7 +97,7 @@
   <xsl:if test="$expand-parameter-entities!=1 and //entity[@type='param']">
     <section id="pentsec">
       <title>Parameter Entities</title>
-      <xsl:for-each select="entity[@type='param']">
+      <xsl:for-each select="//entity[@type='param']">
         <xsl:call-template name="entity"/>
       </xsl:for-each>
     </section>
@@ -109,7 +106,7 @@
   <!-- Details of elements -->
   <section id="eltsec">
     <title>Elements</title>
-    <xsl:for-each select="element">
+    <xsl:for-each select="//element">
       <xsl:call-template name="element"/>
     </xsl:for-each>
   </section>

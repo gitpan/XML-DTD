@@ -1,13 +1,14 @@
 package XML::DTD::EntityManager;
 
+use XML::DTD::Error;
+
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.04';
+our $VERSION = '0.09';
 
 # Constructor
 sub new {
@@ -35,7 +36,6 @@ sub new {
 # Determine whether object is of this type
 sub isa {
   my $cls = shift;
-  carp "class method called on an object" if ref $cls;
   my $r = shift;
 
   if (defined($r) && ref($r) eq $cls) {
@@ -87,7 +87,7 @@ sub pevalue {
       return $ent->value;
     } else {
       # The value of an internal entity has character and
-      # parameter entity expansion cattried out on it
+      # parameter entity expansion carried out on it
       return $self->entitysubst($ent->value);
     }
   } else {
@@ -207,7 +207,8 @@ sub entitysubst {
       $lt .= $entv;
     } else {
       $lt .= $type.$val.';';
-      carp 'undefined entity referenced';
+      throw XML::DTD::Error("Reference to undefined entity in string: $txt",
+			    $self);
     }
   }
   $lt .= $rt;
@@ -234,7 +235,8 @@ sub includeaspe {
       $lt .= ' '.$entv.' ';
     } else {
       $lt .= $1;
-      carp 'undefined entity referenced';
+      throw XML::DTD::Error("Reference to undefined entity in string: $txt",
+			    $self);
     }
   }
   $lt .= $rt;
@@ -281,7 +283,9 @@ Test object type.
  my $ent = XML::DTD::Entity->new('<!ENTITY a "b">');
  $em->insert($ent);
 
-Insert an entity declaration.
+Insert an entity declaration. This method is a wrapper which
+determines the type of entity and calls insertpe or insertge as
+appropriate.
 
 =item B<insertpe>
 
@@ -294,10 +298,9 @@ Insert a parameter entity declaration.
 
  my $val = $em->pevalue('%a;');
 
-Lookup a parameter entity value.
-Recursively expands internal parameter
-and character entity references.
-Leaves general entity references unmodified.
+Lookup a parameter entity value.  Recursively expands internal
+parameter and character entity references.  Leaves general entity
+references unmodified.
 
 May also be called as:
 
@@ -341,32 +344,29 @@ with the same effect.
 
  my $val = $em->peexpand('%a;');
 
-Lookup a parameter entity declaration and return
-its expansion as in L<pevalue> if it exists,
-otherwise return the peref.
+Lookup a parameter entity declaration and return its expansion as in
+L<pevalue> if it exists, otherwise return the peref.
 
 May also be called as:
 
  my $val = $em->peexpand('a');
 
-with the same effect. Note: returns C<%a;> if there is
-no definition of C<a>, even if called in this form.
+with the same effect. Note: returns C<%a;> if there is no definition
+of C<a>, even if called in this form.
 
 =item B<entitysubst>
 
  my $txt = $em->entitysubst('abc &a; def');
 
-Perform entity substitution in text.
-Recursively expands internal parameter
-and character entity references.
-Leaves general entity references unmodified.
+Perform entity substitution in text.  Recursively expands internal
+parameter and character entity references.  Leaves general entity
+references unmodified.
 
-For details see
-sections I<4.4 XML Processor Treatment of Entities and References>
-(L<http://www.w3.org/TR/2006/REC-xml-20060816/#entproc>)
+For details see sections I<4.4 XML Processor Treatment of Entities and
+References> (L<http://www.w3.org/TR/2006/REC-xml-20060816/#entproc>)
 and I<4.5 Construction of Entity Replacement Text>
-(L<http://www.w3.org/TR/2006/REC-xml-20060816/#intern-replacement>)
-in I<Extensible Markup Language (XML) 1.0 (Fourth Edition)>
+(L<http://www.w3.org/TR/2006/REC-xml-20060816/#intern-replacement>) in
+I<Extensible Markup Language (XML) 1.0 (Fourth Edition)>
 (L<http://www.w3.org/TR/2006/REC-xml-20060816/>)
 
 =back
@@ -381,7 +381,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

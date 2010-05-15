@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0"?>
 <!--
      XSL stylesheet for generating a DTD validation XSL stylesheet
-     Brendt Wohlberg     2 June 2006
+     Brendt Wohlberg     21 October 2009
   -->
 
 <xslt:stylesheet xmlns:xslt="http://www.w3.org/1999/XSL/Transform"
@@ -11,7 +11,7 @@
                  xmlns:vldt="http://search.cpan.org/~wohl/XML-DTD/validate"
                  exclude-result-prefixes="fnct" version="1.0">
 
-<xslt:output method="xml" indent="yes" encoding="iso-8859-1"/>
+<xslt:output method="xml" indent="yes"/>
 <xslt:namespace-alias stylesheet-prefix="xsl" result-prefix="xslt"/>
 <xslt:namespace-alias stylesheet-prefix="func" result-prefix="fnct"/> 
 

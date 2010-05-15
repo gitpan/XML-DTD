@@ -1,17 +1,17 @@
 package XML::DTD::Entity;
 
 use XML::DTD::Component;
+use XML::DTD::Error;
 use URI;
 use LWP::Simple;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -148,7 +148,9 @@ sub _parse {
 	$self->{'WSSYS'} = _lftoce($2);
 	$self->{'QCSYS'} = $3;
 	$self->{'SYSTEM'} = $4;
-	carp "SYSTEM entity has two identifiers\n" if (defined $7);
+	throw XML::DTD::Error("SYSTEM entity has two identifiers in ".
+			      "definition: $entdcl", $self)
+	  if (defined $7);
       }
       $self->{'WSRT'} = _lftoce($8);
       # Need to access external entities here
@@ -159,10 +161,12 @@ sub _parse {
       $self->{'ENTITYDEF'} = $2;
       $self->{'WSRT'} = _lftoce($3);
     } else {
-      carp 'error parsing entity definition';
+      throw XML::DTD::Error("Error parsing entity definition: $entdcl",
+			    $self);
     }
   } else {
-    carp 'error parsing entity name and type';
+    throw XML::DTD::Error("Error parsing entity name and type in definition".
+			  ": $entdcl",$self);
   }
 }
 
@@ -181,12 +185,14 @@ sub _getexternal {
   my $self = shift;
 
   my $absuri = URI->new_abs($self->{'SYSTEM'}, URI->new($self->{'URI'}));
-  #print "Fetch $self->{'NAME'} from ", $absuri->as_string, "\n";
+  ##print "Fetch $self->{'NAME'} from ", $absuri->as_string, "\n";
   my $xent = LWP::Simple::get($absuri);
-  carp "error fetching external entity\n" if (!defined $xent);
+  throw XML::DTD::Error("Error fetching external entity: $absuri")
+    if (!defined $xent);
   # Strip the leading textdef if there is one
   $xent =~ s/^<\?.*\?>//s;
-  carp "external entity has no text declaration\n" if (!defined $&);
+  throw XML::DTD::Error("External entity $absuri has no text declaration",
+			$self) if (!defined $&);
   $self->{'ENTITYDEF'} = $xent;
 }
 
@@ -263,7 +269,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

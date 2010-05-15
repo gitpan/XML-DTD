@@ -3,11 +3,10 @@ package XML::DTD::AttDef;
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -42,7 +41,6 @@ sub new {
 # Determine whether object is of this type
 sub isa {
   my $cls = shift;
-  carp "class method called on an object" if ref $cls;
   my $r = shift;
 
   if (defined($r) && ref($r) eq $cls) {

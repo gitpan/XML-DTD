@@ -1,15 +1,15 @@
 package XML::DTD::Automaton;
 
 use XML::DTD::FAState;
+use XML::DTD::Error;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -44,7 +44,6 @@ sub new {
 # Determine whether object is of this type
 sub isa {
   my $cls = shift;
-  carp "class method called on an object" if ref $cls;
   my $r = shift;
 
   if (defined($r) && ref($r) eq $cls) {
@@ -158,8 +157,8 @@ sub epselim {
 	$tlst = $e->transitions;
 	# Warn if epsilon transition cannot be eliminated
 	if (scalar @$tlst == 0 and !$self->final($self->{'state'}->{$e})) {
-	  carp "Cannot eliminate epsilon transition from $n to " .
-	    $self->{'state'}->{$e} . "\n";
+	  throw XML::DTD::Error("Cannot eliminate epsilon transition from $n ".
+				"to " . $self->{'state'}->{$e}, $self);
 	}
 	# Mark the current state as final if the epsilon transition
 	# destination is final
@@ -469,7 +468,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006 by Brendt Wohlberg
+Copyright (C) 2006,2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

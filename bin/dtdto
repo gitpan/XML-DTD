@@ -1,8 +1,8 @@
 #!perl
 
 # This script parses a DTD and writes it out in a simple XML format
-# Copyright (C) 2006-2008 Brendt Wohlberg <wohl@cpan.org>
-# Most recent modification: 10 June 2006
+# Copyright (C) 2006-2010 Brendt Wohlberg <wohl@cpan.org>
+# Most recent modification: 15 May 2010
 
 use strict;
 use Getopt::Long;
@@ -17,12 +17,12 @@ my $xsldtd = "$share/dtdto/dtd.xsl";
 my $xslhtml = "$share/dtdto/html.xsl";
 my $xsldbk = "$share/dtdto/docbook.xsl";
 
-my ($usagetext, $help, $format, $validflag, $dtdflag, $htmlflag,
+my ($usagetext, $help, $dbglvl, $format, $validflag, $dtdflag, $htmlflag,
     $docbookflag, $topelement, $topid, $title, $anchorprefix);
 
 $usagetext = <<EOF;
-usage: dtdto [ --help ] [ --valid | --dtd | [ ( --html |
-             ( --docbook [ --top-element element-name ]
+usage: dtdto [ --help ] [--debug level] [ --valid | --dtd |
+             [ ( --html | ( --docbook [ --top-element element-name ]
              [ --top-id id-string ] ) ) [ --title title-string ]
              [ --anchor-prefix prefix-string ] ] ]
              [ input-file [ output-file ] ]
@@ -45,6 +45,8 @@ usage: dtdto [ --help ] [ --valid | --dtd | [ ( --html |
 
        --help          Display usage information
 
+       --debug         Set debugging level
+
        If a --valid, --dtd, --html, or --docbook flag is not provided,
        dtdto emits the intermediate XML representation used to
        construct the DTD, HTML, and Docbook outputs.  Note that the
@@ -55,6 +57,7 @@ EOF
 
 # Parse command line options
 GetOptions("help!" => \$help,
+	   "debug=i" => \$dbglvl,
 	   "valid!" => \$validflag,
 	   "dtd!" => \$dtdflag,
 	   "html!" => \$htmlflag,
@@ -87,6 +90,8 @@ if (defined $xmlfile) {
   $xmlfh = *STDOUT;
 }
 
+# Set debugging level for exceptions in XML::DTD modules
+$XML::DTD::Error::Debug = $dbglvl if (defined $dbglvl and $dbglvl > 0);
 
 my $dtd = new XML::DTD;
 $dtd->parse($dtdfh);
@@ -155,7 +160,7 @@ sub fwritevld {
   my $xmlw = new XML::Output({'fh' => $cnvfh});
   $xmlw->open('dtdvalidate');
 
-  my $eltnmlst = $dtd->elementlist;
+  my $eltnmlst = $dtd->elementnames;
   my ($eltnm, $cm, $tp, $cnm, $c, $dfa);
   foreach $eltnm (@$eltnmlst) {
     $cm = $dtd->element($eltnm)->contentmodel;

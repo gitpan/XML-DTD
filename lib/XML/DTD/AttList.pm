@@ -2,15 +2,15 @@ package XML::DTD::AttList;
 
 use XML::DTD::Component;
 use XML::DTD::AttDef;
+use XML::DTD::Error;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.05';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -139,17 +139,20 @@ sub _parse {
       if (!exists($self->{'ATTDEFS'}->{$aname})) {
         push @{$self->{'ATTNAMES'}}, $aname;
 	$self->{'ATTDEFS'}->{$aname} =
-               XML::DTD::AttDef->new($entman, $aname, $atype, $dflt, $ws0, $ws1, $ws2);
+               XML::DTD::AttDef->new($entman, $aname, $atype, $dflt, $ws0,
+                                     $ws1, $ws2);
       }
     }
     if ($attdefs =~ /^\s*$/) {
       $self->{'WS1'} = $attdefs;
     } else {
-      carp 'not all attlist text could be parsed' if ($attdefs !~ /^\w*$/);
-      print STDERR ">> REMAIN >>|$attdefs|<<<<\n";
+      throw XML::DTD::Error("Some ATTLIST text could not be parsed: ".
+			    $attdefs, $self)
+	if ($attdefs !~ /^\w*$/);
     }
   } else {
-    carp 'error parsing attlist name and attdefs';
+    throw XML::DTD::Error("Error parsing ATTLIST name and definitions ".
+			  "in: $attlst", $self);
   }
 }
 
@@ -199,13 +202,19 @@ Return the name of the element with which the attribute list is associated.
 
   $nmlst = $attlist->attribnames;
 
-Return a list of attribute names.
+Return an array of attribute names (associated with a specific
+element) as an array reference.
+
+=item B<attribute>
+
+  $attdefobj = $attlist->attribute('attribname');
+
+Return the attribution definition object (of type XML::DTD::AttDef)
+associated with the specified name.
 
 =item B<merge>
 
   $attlist->merge($otherattlist);
-
-Return a list of attribute names.
 
 Merge another attribute list's attribute declarations with this one's.
 Where the same attribute name is declared in both, keep the one already
@@ -215,7 +224,7 @@ in <$attlist>.
 
 =head1 SEE ALSO
 
-L<XML::DTD>, L<XML::DTD::Component>
+L<XML::DTD>, L<XML::DTD::Component>, L<XML::DTD::AttDef>
 
 =head1 AUTHOR
 
@@ -223,7 +232,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0"?>
 <!--
      XSL stylesheet for converting XML representation of a DTD to HTML
-     Brendt Wohlberg     8 June 2007
+     Brendt Wohlberg     30 April 2010
   -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -9,9 +9,8 @@
                 exclude-result-prefixes="xlink" version="1.0">
 
 <xsl:output method="xml" indent="yes"
-	    doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
-            doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
-	    encoding="iso-8859-1" />
+	  doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
+          doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"/>
 
 
 <!-- Stylesheet parameter determining whether to expand or display 
@@ -61,7 +60,7 @@
       <xsl:if test="$expand-general-entities!=1 and //entity[@type='gen']">
         <h2>General Entities</h2>
 
-        <xsl:for-each select="entity[@type='gen']">
+        <xsl:for-each select="//entity[@type='gen']">
           <xsl:call-template name="entity"/>
         </xsl:for-each>
         
@@ -72,7 +71,7 @@
       <xsl:if test="$expand-parameter-entities!=1 and //entity[@type='param']">
         <h2>Parameter Entities</h2>
         
-        <xsl:for-each select="entity[@type='param']">
+        <xsl:for-each select="//entity[@type='param']">
           <xsl:call-template name="entity"/>
         </xsl:for-each>
         
@@ -82,7 +81,7 @@
       <!-- Details of elements -->
       <h2>Elements</h2>
 
-      <xsl:for-each select="element">
+      <xsl:for-each select="//element">
         <xsl:call-template name="element"/>
       </xsl:for-each>
       

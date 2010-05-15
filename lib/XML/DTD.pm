@@ -15,11 +15,10 @@ use XML::DTD::Text;
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw(XML::DTD::Parser);
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 # Constructor
 sub new {
@@ -116,10 +115,20 @@ sub swritexml {
 
 
 # Return a list of element names
-sub elementlist {
+sub elementnames {
   my $self = shift;
 
   return [sort keys %{$self->{'ELEMENTS'}}];
+}
+
+
+# Return a list of element names
+sub elementlist {
+  my $self = shift;
+
+  warn "XML::DTD method elementlist is deprecated; please use ".
+    "elementnames method\n";
+  return $self->elementnames
 }
 
 
@@ -138,6 +147,15 @@ sub attlist {
   my $name = shift;
 
   return $self->{'ATTLISTS'}->{$name};
+}
+
+
+# Return the associated entity manager object
+sub entman {
+  my $self = shift;
+  my $name = shift;
+
+  return $self->{'ENTMAN'};
 }
 
 
@@ -190,7 +208,8 @@ XML::DTD - Perl module for parsing XML DTDs
 Constructs a new XML::DTD object.
 
 Its parser will be validating, and hence will make parameter entity
-substitutions, if the argument C<$val> is present and non-zero.
+substitutions, if the argument C<$val> is present and has a boolean
+value of true.
 
 =item B<fread>
 
@@ -230,29 +249,39 @@ Write an XML representation of the DTD to a file.
 
 Return an XML representation of the DTD text as a string.
 
-=item B<elementlist>
+=item B<elementnames>
 
-  $elts = $dtd->elementlist;
+  $elts = $dtd->elementnames;
 
-Return a list of element names.
+Return an array of element names as an array reference.
 
 =item B<element>
 
   $eltobj = $dtd->element('elementname');
 
-Return element object associated with the specified name.
+Return the element object (of type XML::DTD::Element) associated with
+the specified name.
 
 =item B<attlist>
 
   $attlistobj = $dtd->attlist('elementname');
 
-Return atribute list object associated with the specified name.
+Return the attribute list object (of type XML::DTD::AttList) associated
+with the specified name.
+
+=item B<entman>
+
+  $entmanobj = $dtd->entman;
+
+Return the associated entity manager object (of type
+XML::DTD::EntityManager).
 
 =back
 
 =head1 SEE ALSO
 
-L<XML::DTD::Parser>, The XML 1.0 W3C Recommendation at
+L<XML::DTD::Parser>, L<XML::DTD::Element>, L<XML::DTD::Attlist>,
+L<XML::DTD::EntityManager>, The XML 1.0 W3C Recommendation at
 http://www.w3.org/TR/REC-xml/
 
 =head1 AUTHOR
@@ -261,7 +290,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

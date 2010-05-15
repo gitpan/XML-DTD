@@ -11,17 +11,16 @@ use XML::DTD::Notation;
 use XML::DTD::PERef;
 use XML::DTD::PI;
 use XML::DTD::Text;
-
+use XML::DTD::Error;
 use URI::file;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -54,7 +53,6 @@ sub new {
 # Determine whether object is of this type
 sub isa {
   my $cls = shift;
-  carp "class method called on an object" if ref $cls;
   my $r = shift;
 
   if (defined($r) && ref($r) eq $cls) {
@@ -82,7 +80,7 @@ sub parse {
   $uri = URI::file->new_abs($uri)->as_string
     if (defined $uri && $uri !~ /^[a-zA-Z][a-zA-Z0-9+\-.]+:/);
 
-#  print "DTD::Parser:: parse URI: $uri\n" if (defined $uri);
+  ##print "DTD::Parser:: parse URI: $uri\n" if (defined $uri);
 
   my ($lt, $dcl, $dcllt, $dclrt);
   # Get first line of input
@@ -137,8 +135,9 @@ sub parse {
 	$self->{'EXPANDINGPE'} = $expanding;
       }
     } else {
-      #print "X: |$lt| |$dcllt| |$rt|\n";
-      carp "unrecognised markup\n";
+      ##print "X: |$lt| |$dcllt| |$rt|\n";
+      throw XML::DTD::Error("Parser found unrecognised markup: $dcllt",
+			    $self);
       return $rt;
     }
     # Copy text after match into unparsed buffer
@@ -147,7 +146,7 @@ sub parse {
     # Get another line of text if unparsed buffer is empty
     $lt .= <$fh> if (!$lt and defined $fh);
   }
-  #print "RT: |$rt|\n";
+  ##print "RT: |$rt|\n";
   return $rt;
 }
 
@@ -216,8 +215,10 @@ sub _parsedecl {
 	push @{$self->{'ALL'}}, $elt
 	  if (!$self->{'EXPANDINGPE'});
 	$self->{'ELEMENTS'}->{$elt->name()} = $elt;
+	##print STDERR "ELT: $self ".$elt->name()."\n";
       } else {
-        carp "element redefined\n";
+	throw XML::DTD::Error("Element " . $elt->name().
+			      " redefined", $self);
       }
     } elsif ($type eq "ATTLIST") {
       my $atl = XML::DTD::AttList->new($self->_entitymanager, $dcl);
@@ -237,7 +238,8 @@ sub _parsedecl {
       push @{$self->{'ALL'}}, XML::DTD::Notation->new($dcl)
         if (!$self->{'EXPANDINGPE'});
     } else {
-      carp "unrecognised declaration type\n";
+      throw XML::DTD::Error("Unrecognised declaration type: $type",
+			    $self);
     }	
   }
   return $rt;
@@ -286,9 +288,18 @@ sub _parsecondsec {
     $rt = $inc->parse($fh, $rt);
     push @{$self->{'ALL'}}, $inc
       if (!$self->{'EXPANDINGPE'});
- } else { # A section of unrecognised type
+    # Copy elements and attributes up to parent level
+    my $hk;
+    foreach $hk (keys %{$inc->{'ELEMENTS'}} ) {
+      $self->{'ELEMENTS'}->{$hk} = $inc->{'ELEMENTS'}->{$hk};
+    }
+    foreach $hk (keys %{$inc->{'ATTLISTS'}} ) {
+      $self->{'ATTLISTS'}->{$hk} = $inc->{'ATTLISTS'}->{$hk};
+    }
+  } else { # A section of unrecognised type
     ($lt, $m, $rt) = _scanuntil($fh, $rt, '\]\]>', 0);
-    carp "unrecognised conditional section type $cond\n";
+    throw XML::DTD::Error("Unrecognised conditional section type: $cond",
+			  $self);
   }
   return $rt;
 }
@@ -385,7 +396,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

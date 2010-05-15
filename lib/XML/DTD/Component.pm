@@ -3,11 +3,10 @@ package XML::DTD::Component;
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.01';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -33,7 +32,6 @@ sub new {
 # Determine whether object is of this type
 sub isa {
   my $cls = shift;
-  carp "class method called on an object" if ref $cls;
   my $r = shift;
 
   if (defined($r) && ref($r) eq $cls) {
@@ -209,7 +207,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

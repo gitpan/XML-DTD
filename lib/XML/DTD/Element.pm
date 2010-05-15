@@ -2,15 +2,15 @@ package XML::DTD::Element;
 
 use XML::DTD::Component;
 use XML::DTD::ContentModel;
+use XML::DTD::Error;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw(XML::DTD::Component);
 
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -29,7 +29,9 @@ sub new {
     bless $self, $cls;
   } else {
     # Called as the main constructor
-    carp "constructor called with undefined element\n" if (! defined($elt));
+    throw XML::DTD::Error("Constructor for XML::DTD::Element called ".
+			  "with undefined element string")
+      if (! defined($elt));
     $self = { };
     bless $self, $cls;
     $self->define('element', $elt, '<!ELEMENT', '>');
@@ -102,7 +104,8 @@ sub _parse {
     $self->{'CONTENTSPECTEXT'} = $cntspc;
     $self->{'CONTENTSPEC'} = XML::DTD::ContentModel->new($cntspc, $entman);
   } else {
-    carp 'error parsing element name and contentspec';
+    throw XML::DTD::Error("Error parsing element name and contentspec string ".
+			  $eltdcl, $self);
   }
 }
 
@@ -152,20 +155,25 @@ Return the name of the element.
 
   print $elt->contentspec;
 
-Return the content specification text.
+Return the content specification text. Note that this is the literal
+text of the specification in the DTD, without any entity expansion.
 
 =item B<contentmodel>
 
   $cm = $elt->contentmodel;
 
-Return the parsed content specification as a content model object reference.
+Return the parsed content specification as a content model object
+reference. If a string representation of the parsed content model
+with entities expanded is desired, use
+
+  $cs = $elt->contentmodel->string;
 
 =back
 
 
 =head1 SEE ALSO
 
-L<XML::DTD>, L<XML::DTD::Component>
+L<XML::DTD>, L<XML::DTD::Component>, L<XML::DTD::ContentModel>
 
 =head1 AUTHOR
 
@@ -173,7 +181,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2006 by Brendt Wohlberg
+Copyright (C) 2004-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

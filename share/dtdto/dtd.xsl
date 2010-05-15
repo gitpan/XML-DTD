@@ -1,13 +1,12 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version="1.0">
 <!--
      XSL stylesheet for converting XML representation of a DTD back to a DTD
-     Brendt Wohlberg     16 May 2004
+     Brendt Wohlberg     21 October 2009
   -->
 
-<xsl:output method="text" omit-xml-declaration="yes" standalone="no" 
-   encoding="iso-8859-1"/>
+<xsl:output method="text" omit-xml-declaration="yes" standalone="no"/>
 
 
 <!-- Template matching top level dtd element -->

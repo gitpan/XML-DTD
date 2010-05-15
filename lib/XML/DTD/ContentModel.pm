@@ -1,15 +1,15 @@
 package XML::DTD::ContentModel;
 
 use XML::DTD::Automaton;
+use XML::DTD::Error;
 
 use 5.008;
 use strict;
 use warnings;
-use Carp;
 
 our @ISA = qw();
 
-our $VERSION = '0.03';
+our $VERSION = '0.09';
 
 
 # Constructor
@@ -33,7 +33,8 @@ sub new {
     bless $self, $cls;
   } else {
     # Called as the main constructor
-    carp "constructor called with undefined content model string"
+    throw XML::DTD::Error("Constructor for XML::DTD::ContentModel called ".
+			  "with undefined content model string")
       if (!defined $cmstr);
     $self = {
 	     'chldlst' => [],    # List of child objects
@@ -51,7 +52,6 @@ sub new {
 # Determine whether object is of this type
 sub isa {
   my $cls = shift;
-  carp "class method called on an object" if ref $cls;
   my $r = shift;
 
   if (defined($r) && ref($r) eq $cls) {
@@ -250,15 +250,8 @@ sub dfa {
   # regular expression, and then convert to Glushkov form via epsilon
   # state elimination. Since SGML/XML content models are constrained
   # to be unambiguous (or deterministic), the resulting automaton
-  # should be deterministic. For background details see:
-  # * Anne Brüggemann-Klein and Derick Wood, The Validation of SGML
-  #   Content Models, Mathematical and Computer Modelling, 25, 73-84,
-  #   1997
-  #   (http://www11.informatik.tu-muenchen.de/~brueggem/papers/podpJournal.ps)
-  # * Dora Giammarresi, Jean-Luc Ponty, and Derick Wood, Glushkov and
-  #   Thompson Constructions: A Synthesis. Tech. Report 98-17. Università
-  #   Ca' Foscari di Venezia.
-  #   (http://www.mat.uniroma2.it/~giammarr/Research/Papers/gluth.ps.Z)
+  # should be deterministic. For background details see references
+  # in documentation (below) for this method.
 
   # Construct an initial FSA object
   my $fsa = XML::DTD::Automaton->new;
@@ -273,7 +266,8 @@ sub dfa {
   # Remove unreachable states
   $fsa->rmunreach;
   # Ensure FSA is a DFA
-  carp "FSA is not deterministic\n" if (!$fsa->isdeterministic);
+  throw XML::DTD::Error("FSA for content model " . $self->string .
+			" is not deterministic") if (!$fsa->isdeterministic);
   return $fsa;
 }
 
@@ -286,16 +280,19 @@ sub _parse {
   my $entmn = shift; # Entity manager
 
   $cmstr =~ s/\s+//g; # Remove spaces
+  ##print STDERR "PARSE: $cmstr\n";
 
   # Substitute entity values for references if entity is entire content model
   if (defined $entmn and
-      $cmstr =~ /^%([\w\.:\-_]+);$|^\(%([\w\.:\-_]+);\)$/) {
+      $cmstr =~ /^%([\w\.:\-_]+);$|^\(%([\w\.:\-_]+);(\?|\*|\+)?\)$/) {
     my $paren = defined $2;
+    my $ocop = (defined $3)?$3:'';
     $self->{'peref'} = $paren ? $2 : $1;
     my $entv = $entmn->pevalue($self->{'peref'});
     my $cmpnd = ($entv =~ /^[^\(]+\||\,[^\)]+$/);
-    $cmstr = ($paren or $cmpnd)?"($entv)":$entv if (defined $entv);
+    $cmstr = ($paren or $cmpnd)?"($entv$ocop)":"$entv$ocop" if (defined $entv);
     $cmstr =~ s/\s+//g; # Remove spaces
+    ##print STDERR "SUBST: |$cmstr|$1|$2|$3|\n";
   }
 
   # Temporary
@@ -305,13 +302,13 @@ sub _parse {
   if ($cmstr =~ /^([A-Za-z_:][A-Za-z0-9-_:\.]*|#PCDATA)(\?|\+|\*)?$/ or
       $cmstr =~ /^\(([A-Za-z_:][A-Za-z0-9-_:\.]*|#PCDATA)(\?|\+|\*)?\)$/ or
       $cmstr =~ /^\(([A-Za-z_:][A-Za-z0-9-_:\.]*|#PCDATA)\)(\?|\+|\*)?$/) {
-    # Just need to set element name and (optional) occurence operator
+    # Just need to set element name and (optional) occurrence operator
     $self->{'eltname'} = $1;
     $self->{'occurop'} = $2;
-    #print "ATOMIC: |$cmstr|$1|".((defined $2)?$2:'')."\n";
+    ##print STDERR "ATOMIC: |$cmstr|$1|".((defined $2)?$2:'')."\n";
     # Check whether model is a choice or sequence
   } elsif ($cmstr =~ /^\((.+)\)(\?|\+|\*)?$/) {
-    # Set working string to content of parentheses and note occurence operator
+    # Set working string to content of parentheses and note occurrence operator
     $cmstr = $1;
     $self->{'occurop'} = $2;
     ##print STDERR "EXPR0: |$cmstr|\n";
@@ -324,19 +321,23 @@ sub _parse {
       $self->{'combnop'} = $2;
       ##print STDERR "0CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
       $cmstr = $';
+      throw XML::DTD::Error("Invalid content model: $cmstr", $self)
+	  if ($expr eq '');
       push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
     } else { # Parenthesis first
       my ($mat, $pst) = _parenmatch($cmstr);
       # Check whether parenthesis post-match consists of an optional
-      # occurence operator optionally followed by a combine operator
+      # occurrence operator optionally followed by a combine operator
       if ($pst =~ /^(\?|\+|\*)?(\,|\|)?/) {
 	$expr = $mat.(defined($1)?$1:'');
 	$self->{'combnop'} = $2;
 	##print STDERR "1CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
 	$cmstr = $';
+	throw XML::DTD::Error("Invalid content model: $cmstr", $self)
+	  if ($expr eq '');
 	push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
       } else {
-	carp "invalid content model: $cmstr\n";
+	throw XML::DTD::Error("Invalid content model: $cmstr", $self);
 	return;
       }
     }
@@ -355,7 +356,7 @@ sub _parse {
       } else { # Parenthesis first
 	my ($mat, $pst) = _parenmatch($cmstr);
 	# Check whether parenthesis post-match consists of an optional
-	# occurence operator followed by a combine operator
+	# occurrence operator followed by a combine operator
 	if ($pst =~ /^(\?|\+|\*)?(\,|\||$)/) {
 	  $expr = $mat.(defined($1)?$1:'');
 	  # Should check that combine op $2 is correct
@@ -363,13 +364,13 @@ sub _parse {
 	  ##print STDERR "3CMBNOP: >>$2<< >>$cmstr<< >>$expr<<\n";
 	  push @{$self->{'chldlst'}}, $class->new($expr, $entmn);
 	} else {
-	  carp "invalid content model: $cmstr\n";
+	  throw XML::DTD::Error("Invalid content model: $cmstr", $self);
 	  return;
 	}
       }
     }
   } else {
-    carp "invalid content model: $cmstr\n";
+    throw XML::DTD::Error("Invalid content model: $cmstr", $self);
     return;
   }
 }
@@ -392,16 +393,16 @@ sub _parenmatch {
   }
   do {
     if ($posl < $posr) {
-      # A ( is next
+      # A '(' is next
       $level++;
       $pos = $posl+1;
       $posl = index $str, '(', $pos;
       $posl = $len if ($posl < 0);
     } else { # $posl >= $posr
-      # a ) is next
+      # A ')' is next
       $level--;
       if ($level < 0) {
-	carp "Parenthesis matching error in $str\n";
+	throw XML::DTD::Error("Parenthesis matching error in string $str");
 	return undef;
       }
       $pos = $posr+1;
@@ -411,7 +412,7 @@ sub _parenmatch {
     # Drop out when the level returns to 0 or the string is exhausted
   } while ($level > 0 && $pos < $len);
   if ($level > 0) {
-    carp "Parenthesis matching error in $str\n";
+    throw XML::DTD::Error("Parenthesis matching error in string $str");
     return undef;
   }
   my $pre = substr $str, 0, $pos;
@@ -518,8 +519,17 @@ sub _buildfsa {
 	# Expression is atomic, without occurrence operator
 	$fsa->mktrans($ltn, $rtn, $self->element);
       } else {
-	# Should never reach here
-	carp "Error converting expression ".$self->string." to an FSA\n";
+	# Expression is not atomic
+	if (scalar @{$self->children} == 1) {
+	  # Expression is of the form ((a,b)); need to strip outer
+	  # parentheses and recurse down a level
+	  my $chld = $self->children->[0];
+	  $chld->_buildfsa($fsa, $ltn, $rtn);
+	} else {
+	  # Should never reach here
+	  throw XML::DTD::Error("Error converting content model ".
+				$self->string." to an FSA", $self);
+	}
       }
     }
   }
@@ -529,6 +539,8 @@ sub _buildfsa {
 1;
 
 __END__
+
+=encoding utf8
 
 =head1 NAME
 
@@ -553,7 +565,7 @@ model in an XML DTD. The following methods are provided.
 
  my $cm = XML::DTD::ContentModel->new('(a,b*,(c|d)+)');
 
- Construct a new XML::DTD::ContentModel object.
+Construct a new XML::DTD::ContentModel object.
 
 =item B<isa>
 
@@ -567,11 +579,12 @@ Test object type.
 
  my $objlst = $cm->children;
 
-Return the list of child objects (subexpressions).
+Return an array of child objects (subexpressions) which are also of
+type XML::DTD::ContentModel.
 
  my $objlst = $cm->children($children);
 
-Sets the list of child objects (subexpressions). Returns the new value.
+Set the array of child objects (subexpressions). Returns the new value.
 
 =item B<element>
 
@@ -579,10 +592,10 @@ Sets the list of child objects (subexpressions). Returns the new value.
 
 Return the element name if the object has no subexpressions.
 
- my $name = $cm->element($elename);
+ my $name = $cm->element($eltname);
 
-Set the element name. The element name should only be set
-if the object has no subexpressions. Returns the new value.
+Set the element name. The element name should only be set if the
+object has no subexpressions. Returns the new value.
 
 =item B<combineop>
 
@@ -592,8 +605,8 @@ Return the combination operator (",", "|" or C<undef>).
 
  my $op = $cm->combineop($combineop);
 
-Set the combination operator (",", "|", or C<undef>).
-Returns the new value.
+Set the combination operator (",", "|", or C<undef>). Returns the new
+value.
 
 =item B<occurop>
 
@@ -603,8 +616,8 @@ Return the occurrence operator ("?", "+", "*", or C<undef>).
 
  my $op = $cm->occurop($occurop);
 
-Set the occurrence operator ("?", "+", "*", or C<undef>).
-Returns the new value.
+Set the occurrence operator ("?", "+", "*", or C<undef>).  Returns the
+new value.
 
 =item B<isatomic>
 
@@ -619,7 +632,7 @@ single element, ANY, EMPTY, or #PCDATA).
 
  my $nmlst = $cm->childnames;
 
- Return a list of contained elements.
+Return an array of contained element names as an array reference.
 
 =item B<string>
 
@@ -652,7 +665,16 @@ Determine the content specification type ('empty', 'any', 'mixed', or
 
  my $dfa = $cm->dfa;
 
-Construct a Deterministic Finite Automaton to validate the content model.
+Construct a Deterministic Finite Automaton to validate the content
+model (returns an XML::DTD::Automaton object). The approach is to use
+Thompson's construction of an NDFA from a regular expression, and then
+convert to Glushkov form via epsilon state elimination. Since SGML/XML
+content models are constrained to be unambiguous (or deterministic),
+the resulting automaton should be deterministic. For background
+details see:
+
+* Anne Brüggemann-Klein and Derick Wood, The Validation of SGML Content Models, Mathematical and Computer Modelling, 25, 73-84, 1997. L<ftp://ftp.informatik.uni-freiburg.de/documents/papers/brueggem/podpJournal.ps>
+* Dora Giammarresi, Jean-Luc Ponty, and Derick Wood, Glushkov and Thompson Constructions: A Synthesis. Tech. Report 98-17. Università Ca' Foscari di Venezia. L<http://www.mat.uniroma2.it/~giammarr/Research/Papers/gluth.ps.Z>
 
 =back
 
@@ -666,7 +688,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006-2007 by Brendt Wohlberg
+Copyright (C) 2006-2010 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.
