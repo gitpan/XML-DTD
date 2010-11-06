@@ -4,7 +4,7 @@
 
 #########################
 
-use Test::More tests => 1 + 2*12;
+use Test::More tests => 1 + 2*17;
 BEGIN { use_ok('XML::DTD') };
 
 #########################
@@ -148,6 +148,62 @@ $txt = <<EOF;
 <!ENTITY % w "aa">
 <!ELEMENT top (%w;*)>
 <!ELEMENT aa (a|b)>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);
+
+
+
+$txt = <<EOF;
+<!ENTITY % w "aa">
+<!ELEMENT top ((%w;)+)>
+<!ELEMENT %w; (#PCDATA)>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);
+
+
+
+$txt = <<EOF;
+<!ENTITY % w "aa">
+<!ELEMENT top (b,(%w;)+)>
+<!ELEMENT %w; (#PCDATA)>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);
+
+
+$txt = <<EOF;
+<!ENTITY % A "a">
+<!ENTITY % B "b">
+<!ELEMENT c ((%A;)+ | (%B;)+)>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);
+
+
+$txt = <<EOF;
+<!ENTITY % B "b">
+<!ELEMENT a ((%B;)+)>
+<!ELEMENT %B; (#PCDATA)>
+EOF
+$dtd = new XML::DTD;
+ok($dtd->sread($txt));
+is($dtd->swrite(), $txt);
+
+
+# NB: Entity B in the following example violates the "Proper Group/PE Nesting"
+# constraint (see http://www.w3.org/TR/REC-xml/#vc-PEinGroup), but seems to be
+# accepted without error by some common XML parsers, and is therefore
+# supported by XML::DTD
+$txt = <<EOF;
+<!ENTITY % B "b?,">
+<!ELEMENT a ((%B;c)+)>
+<!ELEMENT b (#PCDATA)>
 EOF
 $dtd = new XML::DTD;
 ok($dtd->sread($txt));

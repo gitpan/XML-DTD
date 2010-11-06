@@ -18,7 +18,7 @@ use warnings;
 
 our @ISA = qw(XML::DTD::Parser);
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 # Constructor
 sub new {
@@ -277,6 +277,14 @@ Return the associated entity manager object (of type
 XML::DTD::EntityManager).
 
 =back
+
+=head1 CAVEATS
+
+The DTD parser is an ugly hack, and while any valid DTD should be
+parsed correctly, some types of DTD errors may be ignored, and when
+detected, the error messages are often not very useful. In summary,
+use other tools, such as L<xmllint|http://xmlsoft.org/xmllint.html>
+for checking the validity of a DTD.
 
 =head1 SEE ALSO
 

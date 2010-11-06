@@ -42,3 +42,12 @@ Revision history for Perl extension XML::DTD.
 	- Error handling is now via exceptions based on Error module.
         - Added debug flag to dtdto utility.
         - Improved documentation for a number of modules.
+
+0.10  2010-11-06
+	- Fixed some parsing problems in a DTD example reported by a
+          user. One of these modifications addresses entity definitions 
+          which violate the "Proper Group/PE Nesting" constraint (see
+          http://www.w3.org/TR/REC-xml/#vc-PEinGroup) but which 
+          nevertheless seem to be accepted without error by some common 
+          XML parsers, and are therefore now at least partially supported
+          by XML::DTD.

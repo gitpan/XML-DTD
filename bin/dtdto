@@ -195,7 +195,7 @@ dtdto - Convert an XML DTD to a variety of XML representations.
 
 =head1 SYNOPSIS
 
-B<dtdto> [ B<--help> ] [ B<--valid> | B<--dtd> | [ ( B<--html> | ( B<--docbook> [ B<--top-element> I<element-name> ] [ B<--top-id> I<id-string> ] ) ) [ B<--title> I<title-string> ] [ B<--anchor-prefix> I<prefix-string> ] ] ] [ I<input-file> [ I<output-file> ] ]
+B<dtdto> [ B<--help> ] [ B<--debug> I<level> ] [ B<--valid> | B<--dtd> | [ ( B<--html> | ( B<--docbook> [ B<--top-element> I<element-name> ] [ B<--top-id> I<id-string> ] ) ) [ B<--title> I<title-string> ] [ B<--anchor-prefix> I<prefix-string> ] ] ] [ I<input-file> [ I<output-file> ] ]
 
 =head1 DESCRIPTION
 
@@ -220,6 +220,11 @@ with respect to the DTD.
 =item B<--help>
 
 Display usage information.
+
+=item B<--debug> I<level>
+
+Set debugging level. Default value is 0, with larger integers
+signifying more detailed debugging information.
 
 =item B<--valid>
 
@@ -276,7 +281,7 @@ are not checked at all.
 =head1 LICENSE
 
 This software is made available under the terms of the GNU General
-Public License (version 2).
+Public License (version 2 or later).
 
 
 =head1 AVAILABILITY

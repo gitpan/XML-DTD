@@ -6,10 +6,11 @@ use XML::DTD::Error;
 use 5.008;
 use strict;
 use warnings;
+use Error qw(:try);
 
 our @ISA = qw();
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 
 # Constructor
@@ -43,7 +44,25 @@ sub new {
 	     'occurop' => undef  # Occurrence operator ('?', '*', or '+')
 	    };
     bless $self, $cls;
-    $self->_parse($cls, $cmstr, $entmn);
+    # Try to parse content model string
+    try {
+      $self->_parse($cls, $cmstr, $entmn);
+    }
+    # Catch any parse error exceptions
+    catch XML::DTD::Error with {
+      my $eo = shift;
+      # If entity manager defined, and content model string contains
+      # an entity reference, expand the entity reference and retry
+      # parsing, otherwise just rethrow the exception. (This is an
+      # ugly way of dealing with entity definitions not properly
+      # handled by the parse method.)
+      if (defined $entmn and $cmstr =~ /%[\w\.:\-_]+;/) {
+	  $cmstr = $entmn->entitysubst($cmstr);
+	  $self->_parse($cls, $cmstr, $entmn);
+	} else {
+	  $eo->throw();
+	}
+    };
   }
   return $self;
 }
@@ -273,6 +292,7 @@ sub dfa {
 
 
 # Parse content model string
+#   Warning: This method is a mess, and should be completely rewritten
 sub _parse {
   my $self = shift;
   my $class = shift; # Class identity for calling new method
@@ -284,15 +304,50 @@ sub _parse {
 
   # Substitute entity values for references if entity is entire content model
   if (defined $entmn and
-      $cmstr =~ /^%([\w\.:\-_]+);$|^\(%([\w\.:\-_]+);(\?|\*|\+)?\)$/) {
-    my $paren = defined $2;
-    my $ocop = (defined $3)?$3:'';
-    $self->{'peref'} = $paren ? $2 : $1;
+      ($cmstr =~ /^%([\w\.:\-_]+);$/ or
+       $cmstr =~ /^\(%([\w\.:\-_]+);(\?|\*|\+)?\)$/ or
+       $cmstr =~ /^\(%([\w\.:\-_]+);\)(\?|\*|\+)?$/ or
+       $cmstr =~ /^\(\(%([\w\.:\-_]+);\)(\?|\*|\+)?\)$/)) {
+    #my $paren = defined $2;
+    #my $ocop = (defined $3)?$3:'';
+    #$self->{'peref'} = $paren ? $2 : $1;
+    $self->{'peref'} = $1;
+    my $ocop = (defined $2)?$2:'';
+    #my $paren = $cmstr =~ /\(/;
+    my $paren = 1;
     my $entv = $entmn->pevalue($self->{'peref'});
     my $cmpnd = ($entv =~ /^[^\(]+\||\,[^\)]+$/);
     $cmstr = ($paren or $cmpnd)?"($entv$ocop)":"$entv$ocop" if (defined $entv);
     $cmstr =~ s/\s+//g; # Remove spaces
-    ##print STDERR "SUBST: |$cmstr|$1|$2|$3|\n";
+    ##print STDERR "SUBST: |$cmstr|$paren|$cmpnd|$entv|\n";
+  }
+
+  # Substitute entity values for references if content model consists
+  # of a single entity with various configurations of parentheses and
+  # occurence operators
+  if (defined $entmn) {
+    if ($cmstr =~ /^%([\w\.:\-_]+);$/) {
+      $self->{'peref'} = $1;
+      my $entv = $entmn->pevalue($self->{'peref'});
+      $cmstr = "($entv)" if (defined $entv);
+    } elsif ($cmstr =~ /^\(%([\w\.:\-_]+);(\?|\*|\+)?\)$/) {
+      $self->{'peref'} = $1;
+      my $ocop = (defined $2)?$2:'';
+      my $entv = $entmn->pevalue($self->{'peref'});
+      $cmstr = "($entv$ocop)" if (defined $entv);
+    } elsif ($cmstr =~ /^\(%([\w\.:\-_]+);\)(\?|\*|\+)?$/) {
+      $self->{'peref'} = $1;
+      my $ocop = (defined $2)?$2:'';
+      my $entv = $entmn->pevalue($self->{'peref'});
+      $cmstr = "($entv)$ocop" if (defined $entv);
+    } elsif ($cmstr =~ /^\(\(%([\w\.:\-_]+);\)(\?|\*|\+)?\)$/) {
+      $self->{'peref'} = $1;
+      my $ocop = (defined $2)?$2:'';
+      my $entv = $entmn->pevalue($self->{'peref'});
+      $cmstr = "(($entv)$ocop)" if (defined $entv);
+    }
+
+    $cmstr =~ s/\s+//g; # Remove spaces
   }
 
   # Temporary
@@ -308,6 +363,7 @@ sub _parse {
     ##print STDERR "ATOMIC: |$cmstr|$1|".((defined $2)?$2:'')."\n";
     # Check whether model is a choice or sequence
   } elsif ($cmstr =~ /^\((.+)\)(\?|\+|\*)?$/) {
+    # Should rewrite using _parenmatch in place of regex above
     # Set working string to content of parentheses and note occurrence operator
     $cmstr = $1;
     $self->{'occurop'} = $2;
@@ -328,6 +384,7 @@ sub _parse {
       my ($mat, $pst) = _parenmatch($cmstr);
       # Check whether parenthesis post-match consists of an optional
       # occurrence operator optionally followed by a combine operator
+      ##print STDERR "PAREN: |$cmstr|$mat|$pst|\n";
       if ($pst =~ /^(\?|\+|\*)?(\,|\|)?/) {
 	$expr = $mat.(defined($1)?$1:'');
 	$self->{'combnop'} = $2;
@@ -382,6 +439,7 @@ sub _parse {
 sub _parenmatch {
   my $str = shift;
 
+  ##print STDERR "PARENMATCH: $str\n";
   my $level = 0;
   my $pos = 0;
   my $len = length $str;
