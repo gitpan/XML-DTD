@@ -1,4 +1,4 @@
-XML/DTD version 0.10
+XML/DTD version 0.11
 ====================
 
 This package consists of the XML::DTD Perl module as well as
@@ -19,6 +19,12 @@ To install this module type the following:
    make test
    make install
 
+To experiment with the dtdto script prior to installation, type:
+
+   perl Makefile.PL
+   make
+   perl -Mblib blib/script/dtdto <arguments>
+
 DEPENDENCIES
 
 This module requires these other modules and libraries:
@@ -26,13 +32,15 @@ This module requires these other modules and libraries:
   Error
   URI::file
   LWP::Simple
+  File::ShareDir
+  File::ShareDir::Install
   Getopt::Long   (used by the dtdto script)
   File::Temp     (used by the dtdto script)
   libxml/libxslt (used by the dtdto script)
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2004-2010 Brendt Wohlberg  <wohl@cpan.org>
+Copyright (C) 2004-2013 Brendt Wohlberg  <wohl@cpan.org>
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this
@@ -46,3 +54,6 @@ ACKNOWLEDGMENTS
 
 * Lutz Gehlen <perl@lutzgehlen.de> pointed out a serious parsing bug, 
   and suggested a number of improvements to the module documentation.
+
+* Nathan Glenn <garfieldnate@gmail.com> helped improve the excessively 
+  complicated and platform-dependent installation process in Makefile.PL.

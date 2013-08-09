@@ -18,7 +18,7 @@ use warnings;
 
 our @ISA = qw(XML::DTD::Parser);
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 # Constructor
 sub new {
@@ -298,7 +298,7 @@ Brendt Wohlberg E<lt>wohl@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004-2010 by Brendt Wohlberg
+Copyright (C) 2004-2013 by Brendt Wohlberg
 
 This library is available under the terms of the GNU General Public
 License (GPL), described in the GPL file included in this distribution.

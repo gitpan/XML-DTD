@@ -51,3 +51,9 @@ Revision history for Perl extension XML::DTD.
           nevertheless seem to be accepted without error by some common 
           XML parsers, and are therefore now at least partially supported
           by XML::DTD.
+
+0.11  2013-08-09
+        - Improved excessively complicated and platform-dependent 
+          Makefile.PL to address rt.cpan.org bug 85144. No changes to 
+          modules.
+

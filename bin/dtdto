@@ -1,17 +1,17 @@
 #!perl
 
 # This script parses a DTD and writes it out in a simple XML format
-# Copyright (C) 2006-2010 Brendt Wohlberg <wohl@cpan.org>
-# Most recent modification: 15 May 2010
+# Copyright (C) 2006-2013 Brendt Wohlberg <wohl@cpan.org>
+# Most recent modification: 9 August 2013
 
 use strict;
 use Getopt::Long;
 use File::Temp;
-use FindBin; use lib ("$FindBin::RealBin/../lib");
+use File::ShareDir ':ALL';
 
 use XML::DTD;
 
-my $share = "$FindBin::RealBin/../share";
+my $share = dist_dir('XML-DTD');
 my $xslvld = "$share/dtdto/valid.xsl";
 my $xsldtd = "$share/dtdto/dtd.xsl";
 my $xslhtml = "$share/dtdto/html.xsl";
